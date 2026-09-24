@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>脊智健 SpineSync · 大学生端云协同健康干预系统</title>
+<style>
+:root{--bg:#08120f;--panel:#0f1c18;--panel2:#16302a;--accent:#2dd4bf;--text:#e2e8f0;--muted:#8ba3a0;--ok:#34d399;--warn:#f43f5e;--mid:#fbbf24;--purple:#a78bfa;--blue:#60a5fa}
+*{box-sizing:border-box;margin:0;padding:0}
+body{min-height:100vh;display:flex;justify-content:center;padding:24px;color:var(--text);
+background:radial-gradient(1100px 700px at 15% -10%,rgba(16,185,129,.16),transparent),
+radial-gradient(900px 600px at 110% 115%,rgba(20,184,166,.14),transparent),var(--bg);
+font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif}
+.app{width:min(980px,100%)}
+header{text-align:center;margin-bottom:14px}
+header h1{font-size:26px;letter-spacing:2px}
+header h1 span{color:var(--accent)}
+header p{color:var(--muted);font-size:14px;margin-top:6px}
+#modeTag{display:inline-block;margin-top:10px;font-size:12px;color:var(--accent);background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.3);padding:5px 14px;border-radius:999px}
+#modeTag.ready{color:var(--ok);background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.3)}
+.hidden{display:none!important}
+
+/* ===== Tab ===== */
+.tabs{display:flex;gap:8px;justify-content:center;margin-bottom:18px;flex-wrap:wrap}
+.tab{background:var(--panel);color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer}
+.tab:hover{border-color:var(--accent)}
+.tab.active{background:var(--accent);color:#04241d;border-color:var(--accent)}
+
+/* ===== 通用面板 ===== */
+.panel{background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:18px;margin-bottom:16px}
+.panel h2{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.panel h2 .tag{font-size:11px;background:var(--panel2);padding:3px 8px;border-radius:6px;color:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.row:last-child{margin-bottom:0}
+label{font-size:13px;color:var(--muted);min-width:60px}
+input,select,textarea{background:#0a1512;border:1px solid rgba(255,255,255,.14);color:var(--text);border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit}
+input[type=text],input[type=password]{flex:1;min-width:220px}
+textarea{flex:1;min-width:280px;min-height:64px;resize:vertical}
+select{min-width:150px}
+button{background:var(--accent);color:#04241d;border:none;border-radius:10px;padding:10px 20px;font-size:14px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.ghost{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,.2);font-weight:400}
+button.small{padding:6px 12px;font-size:12.5px}
+.mode-hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6}
+.err{color:var(--warn);font-size:14px;padding:12px;background:rgba(244,63,94,.08);border-radius:10px;margin-top:8px}
+.ok-text{color:var(--ok);font-size:14px;padding:12px;background:rgba(52,211,153,.08);border-radius:10px;margin-top:8px}
+details{background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin-bottom:16px}
+details summary{cursor:pointer;font-weight:700;font-size:15px;color:var(--accent)}
+details h3{margin-top:12px;font-size:14px;color:#cbd5e1}
+details pre{white-space:pre-wrap;word-break:break-word;font-size:12.5px;line-height:1.6;background:#0a1512;border-radius:10px;padding:14px;margin-top:10px;max-height:340px;overflow:auto;color:#cbd5e1}
+details button{margin-top:10px}
+a{color:var(--accent)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.chip{background:var(--panel2);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer;color:#cbd5e1}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.checkline{display:flex;align-items:center;gap:8px;font-size:13px;color:#cbd5e1;margin:4px 0}
+.checkline input{width:16px;height:16px}
+
+/* ===== 摄像头舞台 ===== */
+.stage{position:relative;border-radius:20px;overflow:hidden;background:#000;border:4px solid rgba(255,255,255,.08);transition:border-color .2s,box-shadow .2s}
+.stage.alert{border-color:var(--warn);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 rgba(244,63,94,0)}50%{box-shadow:0 0 36px 6px rgba(244,63,94,.8)}}
+video{display:block;width:100%;transform:scaleX(-1)}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%}
+.badge{position:absolute;top:12px;left:12px;padding:6px 14px;border-radius:999px;font-size:13px;background:rgba(0,0,0,.55);backdrop-filter:blur(4px)}
+.badge.ok{background:rgba(16,185,129,.9);color:#fff}
+.badge.warn{background:rgba(244,63,94,.92);color:#fff}
+#halo{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.2s}
+#halo.on{opacity:1;animation:haloBreath 4s ease-in-out infinite}
+@keyframes haloBreath{0%,100%{box-shadow:inset 0 0 60px 12px rgba(255,170,60,.05)}50%{box-shadow:inset 0 0 130px 44px rgba(255,170,60,.20)}}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-top:16px}
+.card{background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 10px;text-align:center}
+.card b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.card span{font-size:12px;color:var(--muted);display:block;margin-top:4px}
+.left{color:#60a5fa}.right{color:#fbbf24}.teal{color:var(--accent)}
+.controls{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;align-items:center;margin-top:18px}
+.tips{margin-top:16px;background:var(--panel2);border-radius:12px;padding:12px 16px;font-size:13px;color:#cbd5e1;line-height:1.9}
+.tips code{background:rgba(0,0,0,.35);padding:2px 6px;border-radius:6px;color:#7dd3fc}
+.modes{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+.mode{background:var(--panel);color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer}
+.mode.active{background:var(--accent);color:#04241d;border-color:var(--accent)}
+
+/* ===== 餐食结果 ===== */
+.foodcard{background:var(--panel2);border-radius:14px;padding:14px;margin-bottom:12px;border-left:4px solid var(--accent)}
+.foodcard .name{font-size:17px;font-weight:700;margin-bottom:8px}
+.badges{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.pbadge{font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:999px;background:#00000055}
+.pbadge.low{background:rgba(52,211,153,.15);color:#34d399;border:1px solid rgba(52,211,153,.4)}
+.pbadge.mid{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.4)}
+.pbadge.high{background:rgba(244,63,94,.15);color:#f43f5e;border:1px solid rgba(244,63,94,.4)}
+.benefit{font-size:12.5px;color:#86efac;line-height:1.7;margin-top:6px}
+.indbox{background:#0a1512;border-radius:12px;padding:12px 14px;margin-top:10px;font-size:13.5px;line-height:1.9}
+.fogbox{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.35);border-radius:12px;padding:12px 14px;margin-top:10px;font-size:13.5px;line-height:1.9;color:#fde68a}
+.switchbox{background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.35);border-radius:12px;padding:12px 14px;margin-top:10px;font-size:13.5px;line-height:1.9;color:#99f6e4}
+#mealPreview{max-width:220px;max-height:160px;border-radius:12px;margin-top:8px;display:block}
+
+/* ===== 智能仲裁 ===== */
+.stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:16px}
+.stage{background:var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;min-height:170px;border-top:4px solid var(--accent)}
+.stage.a{border-top-color:var(--ok)}
+.stage.b{border-top-color:var(--mid)}
+.stage.c{border-top-color:var(--purple)}
+.stage h3{font-size:14px;margin-bottom:10px;display:flex;gap:8px;align-items:center}
+.stage .role{font-size:11px;background:var(--panel2);padding:2px 8px;border-radius:6px;color:var(--muted)}
+.stage .log{font-size:13px;line-height:1.9;color:#cbd5e1}
+.stage .log .think{opacity:.85}
+.stage .log .json{display:block;background:#0a1512;border-radius:8px;padding:8px 10px;margin-top:8px;font-size:12px;white-space:pre-wrap;word-break:break-word;color:#7dd3fc;border-left:3px solid var(--accent)}
+.stage .status{font-size:12px;color:var(--muted);margin-top:8px}
+.final{background:linear-gradient(135deg,rgba(45,212,191,.12),rgba(167,139,250,.12));border:1px solid rgba(45,212,191,.35);border-radius:16px;padding:20px;display:none;margin-bottom:16px}
+.final h2{font-size:16px;color:var(--accent);margin-bottom:12px}
+.final .line{font-size:14.5px;line-height:2;color:var(--text)}
+.final .line b{color:var(--mid)}
+.final .block{background:rgba(0,0,0,.3);border-radius:10px;padding:10px 14px;margin:6px 0;line-height:1.9;font-size:13.5px}
+.typebadge{display:inline-block;background:var(--panel2);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:8px 12px;margin:4px 6px 0 0;font-size:12.5px;line-height:1.7}
+.typebadge b{color:var(--warn)}
+
+/* ===== 咖啡因沙盘 ===== */
+#caffChart{width:100%;height:260px;background:#0a1512;border-radius:12px}
+#caffCountdown{font-size:28px;font-weight:700;color:var(--mid);text-align:center;margin:10px 0}
+.rxcard{background:var(--panel2);border-left:4px solid var(--blue);border-radius:12px;padding:12px 14px;margin-top:10px;font-size:13.5px;line-height:1.9}
+.rxcard b{color:#93c5fd}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+<h1>脊智健 <span>SpineSync</span></h1>
+<p>大学生端云协同健康干预系统 —— 端侧轻量视觉感知 × 云端多模态解构 × 混合多智能体反思审裁</p>
+<div id="modeTag">⚙️ 未配置 API Key（AI 功能为离线演示模式）</div>
+</header>
+
+<nav class="tabs">
+<button class="tab active" data-tab="pose">🧍 姿态纠偏</button>
+<button class="tab" data-tab="meal">🍜 餐食解构</button>
+<button class="tab" data-tab="eye">👁 护眼感知</button>
+<button class="tab" data-tab="caffeine">☕ 咖啡因沙盘</button>
+<button class="tab" data-tab="advisor">🧠 智能仲裁</button>
+<button class="tab" data-tab="settings">⚙️ API 设置</button>
+</nav>
+
+<!-- ================= Tab 1：姿态纠偏 ================= -->
+<section id="tab-pose" class="tabpage">
+<div class="modes" id="poseModes">
+<button class="mode active" data-mode="squat">🏋 深蹲纠正</button>
+<button class="mode" data-mode="sit">🪑 坐姿监测</button>
+<button class="mode" data-mode="calf">🦵 床梯踝伸展</button>
+<button class="mode" data-mode="chest">🚪 门框开胸拉伸</button>
+</div>
+<div class="stage" id="poseStage">
+<video id="poseVideo" playsinline autoplay muted></video>
+<canvas id="poseCanvas"></canvas>
+<div class="badge" id="poseBadge">等待启动</div>
+</div>
+<div class="stats" id="poseStats"></div>
+<div class="panel hidden" id="padPanel">
+<h2>📖 硬木椅「垫书校准」 <span class="tag">3-4cm 硬皮课本垫于坐骨后半侧</span></h2>
+<div class="row">
+<button class="ghost" id="padBefore">1️⃣ 记录垫书前</button>
+<button class="ghost" id="padAfter">2️⃣ 垫书后记录</button>
+<span id="padResult" style="font-size:13px;color:var(--muted)">请侧身对镜头坐下，先后各点击一次</span>
+</div>
+<div class="mode-hint">系统比对垫入课本前后「躯干-大腿夹角」：垫书前骨盆后倾夹角偏大（&gt;100°），垫书后恢复中立位（85°~100°）即提示「腰椎生理前凸恢复成功」。</div>
+</div>
+<div class="controls">
+<button id="poseStart">📷 开启摄像头</button>
+<button id="poseStop" class="ghost" disabled>⏹ 停止</button>
+<button id="poseVoice" class="ghost">🔊 语音提示：开</button>
+<label class="checkline" style="margin:0"><input type="checkbox" id="poseDemo" /> 演示加速（时长阈值 ×10）</label>
+</div>
+<div class="tips" id="poseTips"></div>
+</section>
+
+<!-- ================= Tab 2：餐食解构 ================= -->
+<section id="tab-meal" class="tabpage hidden">
+<div class="panel">
+<h2>🍜 输入餐食 <span class="tag">食堂窗口 / 外卖小票 / 餐盘拍照</span></h2>
+<div class="row">
+<input type="text" id="mealInput" placeholder="例如：大份猪肉炒面 + 凉茶 / 麻辣烫（牛油+方便面+午餐肉）" />
+<button id="mealSend">解构分析</button>
+</div>
+<div class="row">
+<label>进餐时间</label>
+<select id="mealTime">
+<option value="07:30">早餐 07:30</option>
+<option value="12:00" selected>午餐 12:00</option>
+<option value="18:00">晚餐 18:00</option>
+<option value="custom">自定义</option>
+</select>
+<input type="time" id="mealCustom" value="12:00" class="hidden" />
+<label>餐盘照片</label>
+<input type="file" id="mealPhoto" accept="image/*" />
+<button class="ghost small hidden" id="mealClearPhoto">清除照片</button>
+</div>
+<img id="mealPreview" class="hidden" alt="餐盘预览" />
+<div class="chips" id="mealChips">
+<span class="chip">麻辣烫</span><span class="chip">黄焖鸡</span><span class="chip">猪肉炒面+凉茶</span><span class="chip">自选称重</span><span class="chip">炸鸡外卖</span>
+</div>
+<div class="mode-hint">📷 照片分析需在「API 设置」配置阿里云百炼 <code>qwen-vl-plus</code> 视觉模型；未配置 Key 时按文字描述匹配内置高校食堂演示库。</div>
+</div>
+<div class="panel">
+<h2>📊 代谢解构结果 <span class="tag">热量 / GI / GL / 嘌呤 / 脑雾预警</span></h2>
+<div id="mealResult"><div class="mode-hint">等待输入…</div></div>
+</div>
+<details>
+<summary>📜 查看 / 复制 餐食代谢解构引擎 System Prompt</summary>
+<pre id="mealPrompt"></pre>
+<button class="ghost" id="copyMealPrompt">📋 复制 Prompt</button>
+</details>
+</section>
+
+<!-- ================= Tab 3：护眼感知 ================= -->
+<section id="tab-eye" class="tabpage hidden">
+<div class="stage" id="eyeStage">
+<video id="eyeVideo" playsinline autoplay muted></video>
+<canvas id="eyeCanvas"></canvas>
+<div id="halo"></div>
+<div class="badge" id="eyeBadge">等待启动</div>
+</div>
+<div class="stats" id="eyeStats"></div>
+<div class="controls">
+<button id="eyeStart">📷 开启摄像头</button>
+<button id="eyeStop" class="ghost" disabled>⏹ 停止</button>
+<button id="haloBtn" class="ghost">🌅 呼吸晕光：关</button>
+<button id="t20Btn" class="ghost">⏱ 开始 20-20-20</button>
+<span id="t20Display" style="font-size:14px;color:var(--muted)">20:00</span>
+<label class="checkline" style="margin:0"><input type="checkbox" id="eyeDemo" /> 演示加速（时间窗口 ×20）</label>
+</div>
+<div class="tips">
+<b>熄灯暗光「眼肌疲劳感知」</b><br />
+1. 基于 <code>MediaPipe Face Mesh</code> 提取眼睑关键点，实时计算 <code>EAR</code>（眼部纵横比）与眨眼频率，全部在本地浏览器完成，<b>画面绝不回传</b>。<br />
+2. 判定：正常眨眼 15-20 次/分；<b>低于 6 次/分持续 5 分钟</b>或频繁挤眼/眯眼 → 判定「重度眼疲劳与干眼高发期」。<br />
+3. 宿舍免打扰干预：<b>严禁声音警报</b>，屏幕边缘渲染 4 秒/次深琥珀色呼吸晕光，引导执行 20-20-20 护眼法则（眺望 6 米远处 20 秒）。<br />
+4. 暗光环境请保持面部有微弱补光；切换离开本页自动关闭摄像头。
+</div>
+</section>
+
+<!-- ================= Tab 4：咖啡因沙盘 ================= -->
+<section id="tab-caffeine" class="tabpage hidden">
+<div class="panel">
+<h2>☕ 考研 / DDL 冲刺期 · 咖啡因半衰期沙盘</h2>
+<div class="row">
+<label>饮料类型</label>
+<select id="drinkSel">
+<option value="150">美式（中杯 ≈150mg）</option>
+<option value="180">美式（大杯 ≈180mg）</option>
+<option value="75">拿铁 ≈75mg</option>
+<option value="80" selected>红牛 ≈80mg</option>
+<option value="160">魔爪能量饮料 ≈160mg</option>
+<option value="50">浓茶 ≈50mg</option>
+<option value="34">可乐 ≈34mg</option>
+</select>
+<label>杯数</label>
+<input type="number" id="cups" value="1" min="1" max="10" style="width:80px" />
+<label>已摄入</label>
+<input type="number" id="minsAgo" value="0" min="0" max="600" style="width:80px" /> 分钟前
+</div>
+<div class="row">
+<label>半衰期</label>
+<select id="halfLife">
+<option value="3">3 小时（快代谢）</option>
+<option value="4">4 小时</option>
+<option value="5" selected>5 小时（青年均值）</option>
+<option value="6">6 小时</option>
+<option value="7">7 小时（慢代谢）</option>
+<option value="8">8 小时</option>
+</select>
+<label>计划入睡</label>
+<select id="sleepTime">
+<option value="22:30">22:30</option>
+<option value="23:00">23:00</option>
+<option value="23:30">23:30</option>
+<option value="00:00">00:00</option>
+<option value="00:30">00:30</option>
+<option value="01:00">01:00</option>
+<option value="01:30">01:30</option>
+<option value="02:00" selected>02:00（考研冲刺）</option>
+<option value="03:00">03:00</option>
+</select>
+<button id="caffGo">🔮 推演沙盘</button>
+</div>
+<div class="mode-hint">一室代谢模型：C(t) = 剂量 × e^(−kt)，k = ln2 / 半衰期。睡眠保护阈值 <b>50mg</b>——超过将拮抗腺苷受体，压制深度睡眠。</div>
+</div>
+<div class="panel">
+<h2>📈 体内咖啡因浓度曲线</h2>
+<canvas id="caffChart" width="760" height="260"></canvas>
+<div id="caffVerdict"></div>
+<div id="caffCountdown"></div>
+</div>
+<div class="panel">
+<h2>💊 熬夜期生理减害与神经递质代偿处方</h2>
+<div class="rxcard"><b>① 阻断血糖剧震</b>：凌晨 0 点后严禁高糖夜宵（血糖剧烈震荡会诱发突发昏睡与次日反弹饥饿）。</div>
+<div class="rxcard"><b>② 神经平衡营养</b>：推送「300ml 常温淡盐水 + 复合维生素 B（维持乙酰胆碱合成）+ 200mg 镁（缓解交感神经过度紧绷）」组合。</div>
+<div class="rxcard"><b>③ 微觉醒指令</b>：注意力涣散点执行 90 秒站立交替后抬腿，促进下肢静脉血逆回流至脑循环，替代加量咖啡。</div>
+</div>
+</section>
+
+<!-- ================= Tab 5：智能仲裁 ================= -->
+<section id="tab-advisor" class="tabpage hidden">
+<div class="panel">
+<h2>🩺 多维体征画像 <span class="tag">驱动代谢分型与安全仲裁</span></h2>
+<div class="row">
+<label>性别</label><select id="gender"><option value="male">男</option><option value="female">女</option></select>
+<label>身高cm</label><input type="number" id="height" value="175" style="width:80px" />
+<label>体重kg</label><input type="number" id="weight" value="68" style="width:80px" />
+<label>腰围cm</label><input type="number" id="waist" value="84" style="width:80px" />
+<label>臀围cm</label><input type="number" id="hip" value="94" style="width:80px" />
+</div>
+<div class="row">
+<label class="checkline"><input type="checkbox" id="chkUric" checked /> 血尿酸偏高</label>
+<label class="checkline"><input type="checkbox" id="chkLiver" /> 轻度脂肪肝</label>
+<label class="checkline"><input type="checkbox" id="chkFlat" /> 扁平足</label>
+<label class="checkline"><input type="checkbox" id="chkKnee" checked /> 膝关节劳损</label>
+<label>平均熬夜</label>
+<select id="sleepAvg"><option>≤1 小时</option><option selected>2-3 小时</option><option>4 小时以上</option></select>
+</div>
+<div class="row">
+<button id="typeBtn">🧬 生成代谢分型</button>
+</div>
+<div id="profileTypes"></div>
+</div>
+<div class="panel">
+<h2>🧩 输入用户场景 <span class="tag">饮食 + 症状 + 运动意图，一句话即可</span></h2>
+<div class="row">
+<textarea id="scenario">今晚吃了麻辣烫和冰红茶，血尿酸偏高且膝关节有劳损，想深蹲跳和波比跳刷脂，明天还要全天复习</textarea>
+<button id="runBtn">▶ 运行三智能体仲裁</button>
+</div>
+<div class="mode-hint">Nutri-Agent（临床营养）＋ Physio-Agent（运动生物力学）＋ Safety-Critic（安全仲裁）。未配置 Key 时运行内置完整演示。</div>
+</div>
+<div class="stages">
+<div class="stage a">
+<h3>🥗 Nutri-Agent <span class="role">临床营养代谢体</span></h3>
+<div class="log" id="logN"></div><div class="status" id="statusN"></div>
+</div>
+<div class="stage b">
+<h3>🏋 Physio-Agent <span class="role">运动生物力学体</span></h3>
+<div class="log" id="logP"></div><div class="status" id="statusP"></div>
+</div>
+<div class="stage c">
+<h3>🛡 Safety-Critic <span class="role">安全仲裁中枢·核心壁垒</span></h3>
+<div class="log" id="logS"></div><div class="status" id="statusS"></div>
+</div>
+</div>
+<div class="final" id="final">
+<h2>🎯 最终处方（用户可见）</h2>
+<div id="finalBody"></div>
+</div>
+<details>
+<summary>📜 三个 Agent 的 System Prompt（可复制）</summary>
+<h3>Nutri-Agent</h3><pre id="promptN"></pre><button class="ghost" data-copy="promptN">📋 复制</button>
+<h3>Physio-Agent</h3><pre id="promptP"></pre><button class="ghost" data-copy="promptP">📋 复制</button>
+<h3>Safety-Critic</h3><pre id="promptS"></pre><button class="ghost" data-copy="promptS">📋 复制</button>
+</details>
+<details>
+<summary>🧠 LangGraph 决策状态机伪代码（答辩用）</summary>
+<pre id="pseudo"></pre>
+</details>
+</section>
+
+<!-- ================= Tab 6：API 设置 ================= -->
+<section id="tab-settings" class="tabpage hidden">
+<div class="panel">
+<h2>🔌 AI 接口配置 <span class="tag" id="settingsTag">未配置</span></h2>
+<div class="row">
+<label>提供商</label>
+<select id="provider">
+<option value="deepseek">DeepSeek-V3（deepseek-chat）</option>
+<option value="dashscope">阿里云百炼 DashScope（Qwen / Qwen-VL）</option>
+<option value="zhipu">智谱 AI（GLM）</option>
+</select>
+<label>模型</label>
+<select id="model"></select>
+</div>
+<div class="row">
+<label>API Key</label>
+<input type="password" id="apiKey" placeholder="sk-...（仅保存在本机浏览器 localStorage，不上传）" />
+<button class="ghost" id="clearKey">清除</button>
+</div>
+<div class="row">
+<button id="testBtn">🔗 测试连接</button>
+<span id="testResult" style="font-size:13px"></span>
+</div>
+<div class="mode-hint">
+💡 <b>请填入你的 DeepSeek Key</b>（<a href="https://platform.deepseek.com/" target="_blank">platform.deepseek.com</a> 免费申请；仅存本机浏览器，可随时清除/更换）。<br />
+💡 <b>Key 与模型均按平台分别保存</b>：同一平台（DeepSeek / 阿里云 / 智谱）下所有模型共用一把 Key（这是各平台的签发机制），切换平台时自动加载该平台自己的 Key；每把 Key 仅保存在本机浏览器 localStorage，不上传。<br />
+💡 申报书技术路线对应入口：多智能体推理底座 <b>DeepSeek-V3</b>（<a href="https://platform.deepseek.com/" target="_blank">platform.deepseek.com</a>）；多模态餐食解构 <b>Qwen2.5-VL</b>（<a href="https://bailian.console.aliyun.com/" target="_blank">阿里云百炼</a>，模型 <code>qwen-vl-plus</code>，支持餐盘照片）。<br />
+⚠ 前端直连仅供竞赛演示（Key 保存在本机浏览器）；生产环境应加后端代理转发。
+</div>
+</div>
+</section>
+</div>
+
+<script type="module">
+/* ============================================================
+   脊智健 SpineSync —— 大学生端云协同健康干预系统（单文件 MVP）
+   ① 姿态纠偏：MediaPipe Pose（膝内扣/骨盆代偿/头颈前伸/宿舍微空间康复）
+   ② 餐食解构：GI/GL/嘌呤 + 餐后脑雾预警 + 食堂窗口过滤器
+   ③ 护眼感知：MediaPipe Face Mesh EAR 眨眼疲劳 + 呼吸晕光干预
+   ④ 咖啡因沙盘：一室代谢模型 + 截断时间反推 + 代偿处方
+   ⑤ 智能仲裁：Nutri / Physio / Safety-Critic 三智能体
+   ============================================================ */
+
+/* ---------- 通用工具 ---------- */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const fmtClock = (sec) => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600) % 24, m = Math.floor(sec / 60) % 60; return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0"); };
+const fmtHMS = (sec) => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s = sec % 60; return h > 0 ? h + "h " + String(m).padStart(2, "0") + "m " + String(s).padStart(2, "0") + "s" : String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0"); };
+function parseJSONText(text) {
+  let t = String(text).trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "");
+  try { return JSON.parse(t); }
+  catch {
+    const s = t.indexOf("{"), e = t.lastIndexOf("}");
+    if (s >= 0 && e > s) { try { return JSON.parse(t.slice(s, e + 1)); } catch {} }
+    throw new Error("模型输出无法解析为JSON");
+  }
+}
+const angleDeg = (a, b, c) => {
+  const v1 = { x: a.x - b.x, y: a.y - b.y, z: a.z - b.z };
+  const v2 = { x: c.x - b.x, y: c.y - b.y, z: c.z - b.z };
+  const dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+  const m1 = Math.hypot(v1.x, v1.y, v1.z), m2 = Math.hypot(v2.x, v2.y, v2.z);
+  if (!m1 || !m2) return 180;
+  return (Math.acos(clamp(dot / (m1 * m2), -1, 1)) * 180) / Math.PI;
+};
+/* 矢状面（z-y 平面）三点夹角：180°=直立，90°=坐姿/髋屈 */
+const angleZY = (a, b, c) => {
+  const v1 = { x: b.z - a.z, y: b.y - a.y };
+  const v2 = { x: c.z - b.z, y: c.y - b.y };
+  const dot = v1.x * v2.x + v1.y * v2.y;
+  const m1 = Math.hypot(v1.x, v1.y), m2 = Math.hypot(v2.x, v2.y);
+  if (!m1 || !m2) return 180;
+  return (Math.acos(clamp(dot / (m1 * m2), -1, 1)) * 180) / Math.PI;
+};
+const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, z: (a.z + b.z) / 2 });
+const dist2 = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+/* ---------- LLM 提供商 ---------- */
+const PROVIDERS = {
+  deepseek: { name: "DeepSeek-V3", url: "https://api.deepseek.com/chat/completions", models: ["deepseek-chat", "deepseek-reasoner"] },
+  dashscope: { name: "阿里云百炼", url: "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions", models: ["qwen-flash", "qwen-turbo", "qwen-plus", "qwen-vl-plus", "qwen-vl-max"] },
+  zhipu: { name: "智谱AI", url: "https://open.bigmodel.cn/api/paas/v4/chat/completions", models: ["glm-4-flash", "glm-4-air", "glm-4-plus"] },
+};
+const apiConfig = () => ({ provider: $("provider").value, model: $("model").value, key: $("apiKey").value.trim() });
+async function callLLM(messages) {
+  const { provider, model, key } = apiConfig();
+  if (!key) throw new Error("NO_KEY");
+  const p = PROVIDERS[provider];
+  const doCall = (body) =>
+    fetch(p.url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+      body: JSON.stringify(body),
+    }).then(async (res) => {
+      const t = await res.text();
+      if (!res.ok) throw new Error("HTTP " + res.status + ": " + t.slice(0, 200));
+      return JSON.parse(t).choices[0].message.content;
+    });
+  try { return await doCall({ model, messages, temperature: 0.2, response_format: { type: "json_object" } }); }
+  catch (e) { return await doCall({ model, messages, temperature: 0.2 }); }
+}
+
+/* ---------- Tab 切换 ---------- */
+function switchTab(name) {
+  document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === name));
+  document.querySelectorAll(".tabpage").forEach((p) => p.classList.toggle("hidden", p.id !== "tab-" + name));
+  if (name !== "pose") stopPose();
+  if (name !== "eye") stopEye();
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.tab)));
+
+/* ---------- 设置页（Key 与模型按平台分别保存） ---------- */
+const keySlot = (prov) => "ss_key_" + prov;
+const modelSlot = (prov) => "ss_model_" + prov;
+const curProvider = () => $("provider").value;
+function refreshModels() {
+  $("model").innerHTML = PROVIDERS[curProvider()].models.map((m) => `<option>${m}</option>`).join("");
+  const saved = localStorage.getItem(modelSlot(curProvider()));
+  if (saved && [...$("model").options].some((o) => o.value === saved)) $("model").value = saved;
+}
+function refreshModeTag() {
+  const on = !!apiConfig().key;
+  $("modeTag").textContent = on ? `✅ 已配置 Key（${PROVIDERS[apiConfig().provider].name} / ${apiConfig().model}）→ AI 真实模式` : "⚙️ 未配置 API Key（AI 功能为离线演示模式）";
+  $("modeTag").classList.toggle("ready", on);
+  $("settingsTag").textContent = on ? "已配置" : "未配置";
+}
+$("provider").addEventListener("change", () => {
+  localStorage.setItem("ss_provider", curProvider());
+  refreshModels();
+  $("apiKey").value = localStorage.getItem(keySlot(curProvider())) || ""; // 切换平台自动加载该平台的 Key
+  refreshModeTag();
+});
+$("model").addEventListener("change", () => { localStorage.setItem(modelSlot(curProvider()), $("model").value); refreshModeTag(); });
+$("apiKey").addEventListener("input", () => { localStorage.setItem(keySlot(curProvider()), $("apiKey").value.trim()); refreshModeTag(); });
+$("clearKey").addEventListener("click", () => { $("apiKey").value = ""; localStorage.removeItem(keySlot(curProvider())); refreshModeTag(); });
+$("testBtn").addEventListener("click", async () => {
+  const box = $("testResult");
+  if (!apiConfig().key) { box.innerHTML = `<span class="err">请先填写 API Key</span>`; return; }
+  box.textContent = "测试中…";
+  try {
+    const out = await callLLM([{ role: "user", content: "只回复两个字：正常" }]);
+    box.innerHTML = `<span class="ok-text">✅ 连接成功，模型回复：${esc(out)}</span>`;
+  } catch (e) { box.innerHTML = `<span class="err">❌ ${esc(e.message || e)}</span>`; }
+});
+
+/* ---------- 语音（宿舍静音可关） ---------- */
+let voiceOn = true, lastSpeak = 0;
+function speak(text) {
+  if (!voiceOn || !("speechSynthesis" in window)) return;
+  const now = Date.now();
+  if (now - lastSpeak < 4000) return;
+  lastSpeak = now;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "zh-CN"; u.rate = 0.95; u.pitch = 1.02;
+    const zh = speechSynthesis.getVoices().find((v) => /^zh/i.test(v.lang));
+    if (zh) u.voice = zh;
+    speechSynthesis.speak(u);
+  } catch (e) { console.warn("TTS 失败", e); }
+}
+if ("speechSynthesis" in window) speechSynthesis.getVoices();
+$("poseVoice").addEventListener("click", () => {
+  voiceOn = !voiceOn;
+  $("poseVoice").textContent = voiceOn ? "🔊 语音提示：开" : "🔇 语音提示：关";
+});
+
+/* ============================================================
+   ① 姿态纠偏（MediaPipe Pose，纯端侧）
+   ============================================================ */
+const mp = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14")
+  .then((m) => m.default ?? m)
+  .catch((e) => { console.warn("MediaPipe 加载失败", e); return null; });
+const { PoseLandmarker, FilesetResolver, DrawingUtils, POSE_CONNECTIONS } = mp || {};
+
+const poseVideo = $("poseVideo"), poseCanvas = $("poseCanvas");
+const pctx = poseCanvas.getContext("2d");
+const drawingUtils = mp ? new DrawingUtils(pctx) : null;
+const poseBadge = $("poseBadge");
+
+const POSE_CONFIG = {
+  squatInAngle: 110, squatOutAngle: 150, kneeOverToeZ: 0.07,
+  valgusAmt: 0.035, winkHipAngle: 55, fhpAngle: 45, fhpSec: 120,
+  calfAnkleAngle: 105, calfKneeStraight: 150, calfHold: 30,
+  chestElbowLo: 75, chestElbowHi: 105, chestHold: 20,
+  alertFrames: 6, speakCooldown: 4000, textEveryFrames: 5,
+};
+let poseMode = "squat";
+const poseState = {
+  running: false, frame: 0, lastT: 0,
+  ema: { kneeL: 180, kneeR: 180, fwd: 0, valgus: 0, hipFlex: 180, fhp: 90, ankleL: 90, ankleR: 90, elbowL: 180, elbowR: 180 },
+  squat: false, minAngle: 180, reps: 0,
+  valgusFrames: 0, winkFrames: 0, fhpSec: 0,
+  calfHold: 0, calfReps: 0, calfActive: false,
+  chestHold: 0, chestReps: 0, chestActive: false,
+  pad: { before: null, after: null, capturing: null, until: 0, samples: [] },
+};
+let poseLandmarker = null, poseStream = null, poseRaf = 0, lastVideoTime = -1;
+
+const MODE_STATS = {
+  squat: [["left", "--", "左膝角度"], ["right", "--", "右膝角度"], ["teal", "准备", "深蹲状态"], ["", "0", "深蹲次数"], ["", "0.000", "膝内扣偏移（踝距-膝距）"]],
+  sit: [["teal", "--", "头颈前伸角（耳-肩连线）"], ["", "0s", "低仰角持续"], ["teal", "--", "躯干-大腿夹角"], ["", "--", "垫书前夹角"], ["", "--", "垫书后夹角"]],
+  calf: [["left", "--", "左踝背屈角"], ["right", "--", "右踝背屈角"], ["teal", "0s", "牵拉保持"], ["", "0", "完成次数"], ["", "--", "后腿膝角"]],
+  chest: [["left", "--", "左肘屈角"], ["right", "--", "右肘屈角"], ["teal", "0s", "开胸保持"], ["", "0", "完成次数"], ["", "就绪", "状态"]],
+};
+const MODE_TIPS = {
+  squat: `<b>深蹲纠正（正对摄像头，双脚与肩同宽）</b><br />
+1. 判定：膝角 &lt; 110° 进入深蹲，&gt; 150° 完成一次。<br />
+2. <b>膝内扣（Knee Valgus）</b>：额状面投影中双踝水平间距 − 双膝水平间距 &gt; 阈值 → 臀中肌失活代偿，骨骼线标红 + 语音「注意：双膝外展，对准脚尖，切勿内扣！」<br />
+3. <b>骨盆代偿（Butt Wink）</b>：下蹲最低点躯干-大腿夹角 &lt; 55° → 腰椎段反向拱起风险，骨盆红圈告警「核心收紧，减小下蹲深度，避免腰椎代偿！」<br />
+4. <b>膝超脚尖</b>：膝盖相对脚尖前移量 &gt; 0.07 → 「膝盖超过脚尖，请向后坐」。<br />
+5. 模型与推理全部在浏览器本地完成，视频画面<b>不会上传任何服务器</b>。`,
+  sit: `<b>坐姿监测（请侧身对镜头坐下，模拟宿舍硬木椅）</b><br />
+1. <b>头颈前伸角</b>：耳屏点(7/8) 与肩部(11/12中点)连线相对水平线角度；低于 45° 且持续 120 秒 → 判定重度探颈（上交叉综合征风险），语音「收下巴，头部向后平移」。<br />
+2. <b>躯干-大腿夹角</b>：骨盆后倾时夹角偏大（&gt;100°），用于下方「垫书校准」闭环。<br />
+3. 垫书校准：取一本 3-4cm 厚硬皮课本垫于坐骨后半侧，比对垫入前后夹角，恢复中立位即提示「腰椎生理前凸恢复成功」。`,
+  calf: `<b>床梯/课桌踝伸展（侧身对镜头，双手扶桌/梯梁）</b><br />
+1. 动作：双脚前脚掌踩实，后脚跟自然下沉，利用自重牵拉腓肠肌、跟腱并打开胸椎。<br />
+2. 视觉验证：后腿膝角 &gt; 150°（伸直）且踝背屈角 &gt; 105°（脚跟延伸角度增大）持续 <b>30 秒</b>，计一次肌肉代偿复位。<br />
+3. 全程零噪音、不跳跃，宿舍 1㎡ 内完成。`,
+  chest: `<b>门框开胸拉伸（正对摄像头）</b><br />
+1. 动作：单侧小臂抵住门框/衣柜立面边缘，肘屈约 90°、肘与肩同高，身体缓慢前倾旋转。<br />
+2. 视觉验证：肘屈角 75°~105° 且肘高接近肩高，持续 <b>20 秒</b>，计一次开胸拉伸。<br />
+3. 纠正长时间写代码/赶论文导致的圆肩驼背（胸大肌/胸小肌短缩）。`,
+};
+function renderPoseMode() {
+  document.querySelectorAll("#poseModes .mode").forEach((b) => b.classList.toggle("active", b.dataset.mode === poseMode));
+  $("poseStats").innerHTML = MODE_STATS[poseMode].map((d, i) => `<div class="card"><b class="${d[0]}" id="pv${i}">${d[1]}</b><span>${d[2]}</span></div>`).join("");
+  $("poseTips").innerHTML = MODE_TIPS[poseMode];
+  $("padPanel").classList.toggle("hidden", poseMode !== "sit");
+  ["reps", "fhpSec", "calfHold", "calfReps", "chestHold", "chestReps"].forEach((k) => { poseState[k] = poseState[k] === undefined ? 0 : poseState[k]; });
+  poseState.reps = 0; poseState.calfReps = 0; poseState.chestReps = 0;
+  poseState.calfHold = 0; poseState.chestHold = 0; poseState.fhpSec = 0;
+  poseState.pad.before = poseState.pad.after = null;
+  poseState.pad.capturing = null;
+  $("padResult").textContent = "请侧身对镜头坐下，先后各点击一次";
+  poseBadge.textContent = poseState.running ? "已启动" : "等待启动";
+}
+const pv = (i, v) => { const el = $("pv" + i); if (el) el.textContent = v; };
+document.querySelectorAll("#poseModes .mode").forEach((b) => b.addEventListener("click", () => { poseMode = b.dataset.mode; renderPoseMode(); }));
+
+async function loadPoseModel() {
+  poseBadge.textContent = "模型加载中…";
+  const fileset = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+  const options = {
+    baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task" },
+    runningMode: "VIDEO", numPoses: 1,
+    minPoseDetectionConfidence: 0.5, minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5,
+  };
+  try { poseLandmarker = await PoseLandmarker.createFromOptions(fileset, { ...options, baseOptions: { ...options.baseOptions, delegate: "GPU" } }); }
+  catch (e) {
+    console.warn("GPU 不可用，回退 CPU", e);
+    poseLandmarker = await PoseLandmarker.createFromOptions(fileset, { ...options, baseOptions: { ...options.baseOptions, delegate: "CPU" } });
+  }
+}
+
+function poseLoop() {
+  if (!poseState.running) return;
+  poseRaf = requestAnimationFrame(poseLoop);
+  if (!poseLandmarker || poseVideo.readyState < 2) return;
+  if (poseVideo.currentTime === lastVideoTime) return;
+  lastVideoTime = poseVideo.currentTime;
+  const now = performance.now();
+  const dt = clamp((now - poseState.lastT) / 1000, 0.02, 0.3);
+  poseState.lastT = now;
+  poseState.frame++;
+
+  const results = poseLandmarker.detectForVideo(poseVideo, now);
+  const lm = results.landmarks && results.landmarks[0];
+
+  pctx.save();
+  pctx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
+  pctx.translate(poseCanvas.width, 0);
+  pctx.scale(-1, 1);
+  if (lm && drawingUtils) {
+    drawingUtils.drawConnectors(lm, POSE_CONNECTIONS, { color: "#34d399", lineWidth: 3 });
+    drawingUtils.drawLandmarks(lm, { color: "#e2e8f0", lineWidth: 1, radius: 3.5 });
+    analyzePose(lm, dt);
+  } else {
+    poseBadge.textContent = "未检测到人体，请进入画面";
+    poseBadge.classList.remove("ok", "warn");
+    $("poseStage").classList.remove("alert");
+  }
+  pctx.restore();
+}
+
+function analyzePose(lm, dt) {
+  if (poseMode === "squat") analyzeSquat(lm, dt);
+  else if (poseMode === "sit") analyzeSit(lm, dt);
+  else if (poseMode === "calf") analyzeCalf(lm, dt);
+  else analyzeChest(lm, dt);
+}
+
+/* --- 深蹲：膝内扣 + 骨盆代偿 + 膝超脚尖 --- */
+function analyzeSquat(lm, dt) {
+  const [lHip, rHip] = [lm[23], lm[24]];
+  const [lKnee, rKnee] = [lm[25], lm[26]];
+  const [lAnk, rAnk] = [lm[27], lm[28]];
+  const [lToe, rToe] = [lm[31], lm[32]];
+  const [lSho, rSho] = [lm[11], lm[12]];
+
+  const L = { knee: angleDeg(lHip, lKnee, lAnk), fwd: lToe.z - lKnee.z };
+  const R = { knee: angleDeg(rHip, rKnee, rAnk), fwd: rToe.z - rKnee.z };
+  const k = 0.3;
+  poseState.ema.kneeL = poseState.ema.kneeL * (1 - k) + L.knee * k;
+  poseState.ema.kneeR = poseState.ema.kneeR * (1 - k) + R.knee * k;
+  poseState.ema.fwd = poseState.ema.fwd * (1 - k) + Math.max(L.fwd, R.fwd) * k;
+  const kneeAvg = (poseState.ema.kneeL + poseState.ema.kneeR) / 2;
+
+  if (!poseState.squat && kneeAvg < POSE_CONFIG.squatInAngle) { poseState.squat = true; poseState.minAngle = kneeAvg; }
+  else if (poseState.squat) {
+    poseState.minAngle = Math.min(poseState.minAngle, kneeAvg);
+    if (kneeAvg > POSE_CONFIG.squatOutAngle) {
+      poseState.squat = false;
+      if (poseState.minAngle < POSE_CONFIG.squatInAngle) poseState.reps++;
+    }
+  }
+
+  /* 膝内扣：额状面 踝距 - 膝距 */
+  const kneeDist = dist2(lKnee, rKnee), ankDist = dist2(lAnk, rAnk);
+  const valgusAmt = ankDist - kneeDist;
+  poseState.ema.valgus = poseState.ema.valgus * (1 - k) + valgusAmt * k;
+  poseState.valgusFrames = poseState.squat && poseState.ema.valgus > POSE_CONFIG.valgusAmt ? poseState.valgusFrames + 1 : 0;
+  const valgus = poseState.valgusFrames >= POSE_CONFIG.alertFrames;
+
+  /* 骨盆代偿：矢状面躯干-大腿夹角（髋屈角） */
+  const hipFlex = angleZY(mid(lSho, rSho), mid(lHip, rHip), mid(lKnee, rKnee));
+  poseState.ema.hipFlex = poseState.ema.hipFlex * (1 - k) + hipFlex * k;
+  poseState.winkFrames = poseState.squat && poseState.ema.hipFlex < POSE_CONFIG.winkHipAngle ? poseState.winkFrames + 1 : 0;
+  const wink = poseState.winkFrames >= POSE_CONFIG.alertFrames;
+
+  const overToe = poseState.squat && poseState.ema.fwd > POSE_CONFIG.kneeOverToeZ;
+  const alert = valgus || wink || overToe;
+
+  $("poseStage").classList.toggle("alert", alert);
+  poseBadge.classList.toggle("warn", alert);
+  poseBadge.classList.toggle("ok", !alert && poseState.squat);
+  poseBadge.textContent = valgus ? "⚠ 膝内扣！双膝外展对准脚尖" : wink ? "⚠ 骨盆代偿！核心收紧减小深度" : overToe ? "⚠ 膝盖超过脚尖" : poseState.squat ? "深蹲中 · 姿态正常" : "站姿监测中";
+
+  if (valgus) {
+    drawingUtils.drawConnectors(lm, [[23, 25], [24, 26], [25, 27], [26, 28]], { color: "#f43f5e", lineWidth: 5 });
+    drawingUtils.drawLandmarks([lKnee, rKnee], { color: "#f43f5e", radius: 9, fillColor: "rgba(244,63,94,.35)" });
+    speak("注意：双膝外展，对准脚尖，切勿内扣！");
+  } else if (wink) {
+    drawingUtils.drawConnectors(lm, [[11, 12], [23, 24]], { color: "#f43f5e", lineWidth: 5 });
+    drawingUtils.drawLandmarks([mid(lHip, rHip)], { color: "#f43f5e", radius: 14, fillColor: "rgba(244,63,94,.3)" });
+    speak("核心收紧，减小下蹲深度，避免腰椎代偿！");
+  } else if (overToe) {
+    drawingUtils.drawConnectors(lm, [[25, 27], [26, 28]], { color: "#f43f5e", lineWidth: 5 });
+    speak("膝盖超过脚尖，请向后坐");
+  }
+
+  if (poseState.frame % POSE_CONFIG.textEveryFrames === 0) {
+    pv(0, Math.round(poseState.ema.kneeL) + "°");
+    pv(1, Math.round(poseState.ema.kneeR) + "°");
+    pv(2, alert ? "代偿⚠" : poseState.squat ? "深蹲中" : "准备");
+    pv(3, poseState.reps);
+    pv(4, poseState.ema.valgus.toFixed(3));
+  }
+}
+
+/* --- 坐姿：头颈前伸 + 垫书校准 --- */
+function analyzeSit(lm, dt) {
+  const earMid = mid(lm[7], lm[8]), shMid = mid(lm[11], lm[12]);
+  const dx = Math.abs(earMid.x - shMid.x), dy = shMid.y - earMid.y;
+  const fhp = (Math.atan2(dy, dx) * 180) / Math.PI; // 90°=头在肩正上方
+  const k = 0.3;
+  poseState.ema.fhp = poseState.ema.fhp * (1 - k) + fhp * k;
+
+  const accel = $("poseDemo").checked ? 10 : 1;
+  if (poseState.ema.fhp < POSE_CONFIG.fhpAngle) poseState.fhpSec += dt;
+  else poseState.fhpSec = 0;
+  const severe = poseState.fhpSec >= POSE_CONFIG.fhpSec / accel;
+
+  const hipFlex = angleZY(mid(lm[11], lm[12]), mid(lm[23], lm[24]), mid(lm[25], lm[26]));
+  poseState.ema.hipFlex = poseState.ema.hipFlex * (1 - k) + hipFlex * k;
+
+  /* 垫书校准采样 */
+  if (poseState.pad.capturing) {
+    poseState.pad.samples.push(poseState.ema.hipFlex);
+    if (performance.now() >= poseState.pad.until) finishPad();
+  }
+
+  $("poseStage").classList.toggle("alert", severe);
+  poseBadge.classList.toggle("warn", severe);
+  poseBadge.classList.toggle("ok", !severe && poseState.ema.fhp >= POSE_CONFIG.fhpAngle);
+  poseBadge.textContent = severe ? "⚠ 重度探颈！收下巴，头部后移" : "坐姿监测中";
+
+  if (severe) {
+    drawingUtils.drawConnectors(lm, [[7, 11], [8, 12]], { color: "#f43f5e", lineWidth: 5 });
+    drawingUtils.drawLandmarks([lm[7], lm[8]], { color: "#f43f5e", radius: 8, fillColor: "rgba(244,63,94,.35)" });
+    speak("头部前伸，请收下巴，将头向后平移");
+  }
+
+  if (poseState.frame % POSE_CONFIG.textEveryFrames === 0) {
+    pv(0, Math.round(poseState.ema.fhp) + "°");
+    pv(1, Math.round(poseState.fhpSec) + "s");
+    pv(2, Math.round(poseState.ema.hipFlex) + "°");
+    pv(3, poseState.pad.before === null ? "--" : Math.round(poseState.pad.before) + "°");
+    pv(4, poseState.pad.after === null ? "--" : Math.round(poseState.pad.after) + "°");
+  }
+}
+function startPad(which) {
+  poseState.pad.capturing = which;
+  poseState.pad.samples = [];
+  poseState.pad.until = performance.now() + 2000;
+  $("padResult").textContent = "采样中…保持坐姿 2 秒";
+}
+function finishPad() {
+  const s = poseState.pad.samples;
+  const avg = s.length ? s.reduce((a, b) => a + b, 0) / s.length : null;
+  const which = poseState.pad.capturing;
+  poseState.pad.capturing = null;
+  if (avg === null) { $("padResult").textContent = "未检测到人体，请重试"; return; }
+  poseState.pad[which] = avg;
+  const { before, after } = poseState.pad;
+  if (before !== null && after !== null) {
+    if (before > 100 && after <= 100 && before - after >= 5) {
+      $("padResult").innerHTML = `<span class="ok-text">✅ 腰椎生理前凸恢复成功！垫书前 ${Math.round(before)}°（骨盆后倾）→ 垫书后 ${Math.round(after)}°（中立位）</span>`;
+      speak("腰椎生理前凸恢复成功");
+    } else {
+      $("padResult").innerHTML = `<span class="err">夹角变化不足：前 ${Math.round(before)}° / 后 ${Math.round(after)}°。请确认书本垫于坐骨后半侧、侧身正对镜头</span>`;
+    }
+  } else {
+    $("padResult").textContent = `已记录垫书${which === "before" ? "前" : "后"}夹角 ${Math.round(avg)}°`;
+  }
+}
+$("padBefore").addEventListener("click", () => startPad("before"));
+$("padAfter").addEventListener("click", () => startPad("after"));
+
+/* --- 踝伸展：后腿伸直 + 踝背屈角 > 105° 保持 --- */
+function analyzeCalf(lm, dt) {
+  const L = { knee: angleDeg(lm[23], lm[25], lm[27]), ankle: angleDeg(lm[25], lm[27], lm[31]) };
+  const R = { knee: angleDeg(lm[24], lm[26], lm[28]), ankle: angleDeg(lm[26], lm[28], lm[32]) };
+  const k = 0.3;
+  poseState.ema.ankleL = poseState.ema.ankleL * (1 - k) + L.ankle * k;
+  poseState.ema.ankleR = poseState.ema.ankleR * (1 - k) + R.ankle * k;
+
+  const activeL = L.knee > POSE_CONFIG.calfKneeStraight && poseState.ema.ankleL > POSE_CONFIG.calfAnkleAngle;
+  const activeR = R.knee > POSE_CONFIG.calfKneeStraight && poseState.ema.ankleR > POSE_CONFIG.calfAnkleAngle;
+  const active = activeL || activeR;
+  poseState.calfActive = active;
+  const accel = $("poseDemo").checked ? 10 : 1;
+  if (active) poseState.calfHold += dt;
+  else poseState.calfHold = Math.max(0, poseState.calfHold - dt * 3);
+  const done = poseState.calfHold >= POSE_CONFIG.calfHold / accel;
+  if (done) { poseState.calfReps++; poseState.calfHold = 0; speak("完成一次踝伸展，放松还原"); }
+
+  poseBadge.classList.toggle("ok", active);
+  poseBadge.classList.toggle("warn", false);
+  poseBadge.textContent = done ? "✅ 计一次踝伸展" : active ? "牵拉中 · 脚跟下沉保持" : "请后腿伸直、脚跟下沉";
+
+  if (activeL) drawingUtils.drawConnectors(lm, [[25, 27]], { color: "#f43f5e", lineWidth: 5 });
+  if (activeR) drawingUtils.drawConnectors(lm, [[26, 28]], { color: "#f43f5e", lineWidth: 5 });
+
+  if (poseState.frame % POSE_CONFIG.textEveryFrames === 0) {
+    pv(0, Math.round(poseState.ema.ankleL) + "°");
+    pv(1, Math.round(poseState.ema.ankleR) + "°");
+    pv(2, Math.round(poseState.calfHold) + "s");
+    pv(3, poseState.calfReps);
+    pv(4, Math.round(Math.min(L.knee, R.knee)) + "°");
+  }
+}
+
+/* --- 门框开胸拉伸：肘 75-105° 且肘与肩同高 --- */
+function analyzeChest(lm, dt) {
+  const L = { elbow: angleDeg(lm[11], lm[13], lm[15]), dy: Math.abs(lm[13].y - lm[11].y), dx: Math.abs(lm[13].x - lm[11].x) };
+  const R = { elbow: angleDeg(lm[12], lm[14], lm[16]), dy: Math.abs(lm[14].y - lm[12].y), dx: Math.abs(lm[14].x - lm[12].x) };
+  const k = 0.3;
+  poseState.ema.elbowL = poseState.ema.elbowL * (1 - k) + L.elbow * k;
+  poseState.ema.elbowR = poseState.ema.elbowR * (1 - k) + R.elbow * k;
+  const okL = poseState.ema.elbowL > POSE_CONFIG.chestElbowLo && poseState.ema.elbowL < POSE_CONFIG.chestElbowHi && L.dy < 0.07 && L.dx > 0.12;
+  const okR = poseState.ema.elbowR > POSE_CONFIG.chestElbowLo && poseState.ema.elbowR < POSE_CONFIG.chestElbowHi && R.dy < 0.07 && R.dx > 0.12;
+  const active = okL || okR;
+  poseState.chestActive = active;
+  const accel = $("poseDemo").checked ? 10 : 1;
+  if (active) poseState.chestHold += dt;
+  else poseState.chestHold = Math.max(0, poseState.chestHold - dt * 3);
+  const done = poseState.chestHold >= POSE_CONFIG.chestHold / accel;
+  if (done) { poseState.chestReps++; poseState.chestHold = 0; speak("完成一次开胸拉伸"); }
+
+  poseBadge.classList.toggle("ok", active);
+  poseBadge.textContent = active ? "开胸拉伸保持中 · 缓慢前倾" : "请小臂抵门框，肘屈90°与肩同高";
+
+  if (okL) drawingUtils.drawConnectors(lm, [[11, 13], [13, 15]], { color: "#f43f5e", lineWidth: 5 });
+  if (okR) drawingUtils.drawConnectors(lm, [[12, 14], [14, 16]], { color: "#f43f5e", lineWidth: 5 });
+
+  if (poseState.frame % POSE_CONFIG.textEveryFrames === 0) {
+    pv(0, Math.round(poseState.ema.elbowL) + "°");
+    pv(1, Math.round(poseState.ema.elbowR) + "°");
+    pv(2, Math.round(poseState.chestHold) + "s");
+    pv(3, poseState.chestReps);
+    pv(4, active ? "保持中" : "就绪");
+  }
+}
+
+async function startPose() {
+  if (!mp) { poseBadge.textContent = "MediaPipe CDN 加载失败，请联网后刷新"; return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { poseBadge.textContent = "当前环境不支持摄像头（需 HTTPS / localhost）"; return; }
+  $("poseStart").disabled = true;
+  poseBadge.textContent = "启动中…";
+  try {
+    if (!poseLandmarker) await loadPoseModel();
+    poseStream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }, audio: false });
+    poseVideo.srcObject = poseStream;
+    await new Promise((res) => (poseVideo.onloadedmetadata = res));
+    poseCanvas.width = poseVideo.videoWidth;
+    poseCanvas.height = poseVideo.videoHeight;
+    await poseVideo.play();
+    poseState.running = true;
+    poseState.lastT = performance.now();
+    $("poseStop").disabled = false;
+    poseBadge.textContent = "已启动 · 按提示摆好机位";
+    poseLoop();
+  } catch (e) {
+    console.error(e);
+    poseBadge.textContent = "启动失败：" + (e && e.name === "NotAllowedError" ? "摄像头权限被拒绝" : (e && e.message) || e);
+    $("poseStart").disabled = false;
+  }
+}
+function stopPose() {
+  if (!poseState.running && !poseStream) return;
+  poseState.running = false;
+  cancelAnimationFrame(poseRaf);
+  if (poseStream) { poseStream.getTracks().forEach((t) => t.stop()); poseStream = null; }
+  poseVideo.srcObject = null;
+  pctx.clearRect(0, 0, poseCanvas.width, poseCanvas.height);
+  $("poseStage").classList.remove("alert");
+  poseBadge.classList.remove("ok", "warn");
+  poseBadge.textContent = "已停止";
+  $("poseStart").disabled = false;
+  $("poseStop").disabled = true;
+}
+$("poseStart").addEventListener("click", startPose);
+$("poseStop").addEventListener("click", stopPose);
+$("poseDemo").addEventListener("change", renderPoseMode);
+window.addEventListener("beforeunload", () => { stopPose(); stopEye(); });
+
+/* ============================================================
+   ② 餐食代谢解构（GL 脑雾预警 + 食堂窗口过滤器）
+   ============================================================ */
+const MEAL_SYSTEM_PROMPT = `你是「脊智健 SpineSync」系统的【多模态餐食代谢解构引擎】。用户是高校大学生，输入是一顿饭（食堂窗口、自选称重餐盘、外卖实物或点单截图描述）。你的使命是"看懂一顿饭的代谢负担"。
+
+# 铁律
+1. 只输出一个合法 JSON 对象，不加任何解释、前后缀或 Markdown 代码围栏。
+2. 用户提到痛风、糖尿病等病史时，micro_intervention 末尾追加"请遵医嘱"。
+3. 依据《中国食物成分表》常识估算，允许合理误差；勾芡、糖色、精制主食升糖上调一档。
+
+# 输出协议
+{"dishes":[{"name":"<菜品>","weight_est_g":<估算克数>,"refined_carb_g":<精制碳水g>,"protein_g":<蛋白质g>,"fat_g":<脂肪g>,"gi":<GI数值>,"purine_mg":<嘌呤mg>,"benefit":"<可选：对身体好处的生理机制一句话>"}],
+ "metabolic_indicators":{"total_calories_kcal":<总热量>,"glycemic_load_gl":<血糖负荷GL>,"glycemic_risk":"HIGH_SPIKE|MODERATE|LOW","purine_mg":<嘌呤总量mg>,"purine_risk":"HIGH|MODERATE|LOW"},
+ "fog_window":"<餐后脑雾低血糖窗口，如 13:30-14:30，按用户进餐时间+90~150分钟推算>",
+ "micro_intervention":"<一句话、30秒内可执行：饮食顺序调整+一个轻量动作>",
+ "canteen_switch":"<面向该食堂窗口的改选指令，如清汤底/主食换魔芋丝>",
+ "reason":"<一句话依据>"}
+
+# 判定标准
+- GI：≤55 低；56~69 中；≥70 高。GL = GI × 碳水克数 ÷ 100。
+- 嘌呤：<50mg/100g 低；50~150 中；>150 高。动物内脏、久煮浓汤、海鲜干货、啤酒一律高嘌呤。
+- glycemic_risk：GL≥30 为 HIGH_SPIKE；15~30 为 MODERATE；<15 为 LOW。
+- 脑雾机制：高碳水→血糖骤升→胰岛素分泌过量→餐后 90~150 分钟反应性低血糖谷值→脑雾嗜睡。仅当 HIGH_SPIKE 时 fog_window 有意义。
+- micro_intervention 策略库：先吃膳食纤维（青菜打底）→ 餐后 15 分钟校园慢走 600 步 → 主食减半 → 喝 200ml 温水。禁止建议：催吐、断食、代餐、药物。`;
+
+const DEMO_MEALS = [
+  { match: /炒面|面条/, data: {
+    dishes: [
+      { name: "大份猪肉炒面", weight_est_g: 180, refined_carb_g: 62, protein_g: 12, fat_g: 18, gi: 82, purine_mg: 95, benefit: "高油脂+高GI精制碳水组合，餐后血糖与甘油三酯双峰" },
+      { name: "凉茶", weight_est_g: 80, refined_carb_g: 30, protein_g: 0, fat_g: 0, gi: 75, purine_mg: 0, benefit: "含糖饮料叠加游离糖负荷" },
+    ],
+    metabolic_indicators: { total_calories_kcal: 650, glycemic_load_gl: 36.8, glycemic_risk: "HIGH_SPIKE", purine_mg: 136, purine_risk: "MODERATE" },
+    micro_intervention: "主食面条减半；餐后15分钟在校园慢走600步以压平血糖峰值",
+    canteen_switch: "面条换二两并加一份焯水绿叶菜，凉茶换无糖茶",
+    reason: "精制碳水糊化快、油脂与糖双高，餐后血糖骤升骤降诱发脑雾",
+  } },
+  { match: /麻辣烫/, data: {
+    dishes: [
+      { name: "麻辣烫（牛油+方便面+午餐肉）", weight_est_g: 450, refined_carb_g: 70, protein_g: 18, fat_g: 22, gi: 70, purine_mg: 150 },
+      { name: "冰红茶", weight_est_g: 250, refined_carb_g: 25, protein_g: 0, fat_g: 0, gi: 63, purine_mg: 0 },
+    ],
+    metabolic_indicators: { total_calories_kcal: 640, glycemic_load_gl: 49, glycemic_risk: "HIGH_SPIKE", purine_mg: 150, purine_risk: "HIGH" },
+    micro_intervention: "先涮绿叶菜打底，主食减半，餐后慢走600步",
+    canteen_switch: "选清汤底汤、主食换魔芋丝/玉米、蛋白选卤巴沙鱼片+冻豆腐、绿叶蔬菜占一半体积",
+    reason: "牛油锅底久煮嘌呤浓缩，方便面精制碳水升糖快",
+  } },
+  { match: /黄焖鸡/, data: {
+    dishes: [
+      { name: "黄焖鸡", weight_est_g: 450, refined_carb_g: 55, protein_g: 45, fat_g: 28, gi: 65, purine_mg: 120 },
+      { name: "米饭", weight_est_g: 200, refined_carb_g: 52, protein_g: 5, fat_g: 1, gi: 83, purine_mg: 10 },
+    ],
+    metabolic_indicators: { total_calories_kcal: 720, glycemic_load_gl: 62, glycemic_risk: "HIGH_SPIKE", purine_mg: 130, purine_risk: "MODERATE" },
+    micro_intervention: "鸡肉去皮、汤汁拌饭改泡饭且米饭减半，配一杯无糖茶",
+    canteen_switch: "米饭减半加焯水蔬菜，鸡皮去掉",
+    reason: "米饭高GI+酱汁浓稠，糖色勾芡升糖上调一档",
+  } },
+  { match: /自选|称重|鸡胸|西兰花|轻食/, data: {
+    dishes: [
+      { name: "西兰花", weight_est_g: 100, refined_carb_g: 4, protein_g: 4, fat_g: 1, gi: 15, purine_mg: 30, benefit: "富含β-胡萝卜素与可溶性膳食纤维，在胃部形成保护层延缓葡萄糖吸收，有助于削平餐后血糖高峰；高绿原酸特征有助于降低熬夜引起的血管平滑肌压力" },
+      { name: "卤鸡腿", weight_est_g: 120, refined_carb_g: 2, protein_g: 28, fat_g: 8, gi: 45, purine_mg: 90 },
+      { name: "糙米饭", weight_est_g: 150, refined_carb_g: 35, protein_g: 4, fat_g: 2, gi: 55, purine_mg: 15 },
+    ],
+    metabolic_indicators: { total_calories_kcal: 520, glycemic_load_gl: 28, glycemic_risk: "MODERATE", purine_mg: 90, purine_risk: "MODERATE" },
+    micro_intervention: "正常吃，餐后散步300步即可",
+    canteen_switch: "保持 1/2 蔬菜 + 1/4 蛋白 + 1/4 主食的餐盘配比",
+    reason: "高纤维蔬菜+中低GI主食，血糖曲线平缓",
+  } },
+  { match: /炸鸡|汉堡|外卖/, data: {
+    dishes: [
+      { name: "韩式炸鸡", weight_est_g: 300, refined_carb_g: 40, protein_g: 35, fat_g: 42, gi: 60, purine_mg: 110 },
+      { name: "可乐", weight_est_g: 500, refined_carb_g: 53, protein_g: 0, fat_g: 0, gi: 63, purine_mg: 0 },
+    ],
+    metabolic_indicators: { total_calories_kcal: 890, glycemic_load_gl: 48, glycemic_risk: "HIGH_SPIKE", purine_mg: 110, purine_risk: "MODERATE" },
+    micro_intervention: "去皮吃一半，可乐换无糖气泡水，餐后快走600步",
+    canteen_switch: "炸鸡去皮减半，加一份蔬菜沙拉",
+    reason: "油炸外衣高脂高碳水，含糖饮料加重血糖波动",
+  } },
+];
+
+const badgeCls = (level) => {
+  const s = String(level || "");
+  if (s.startsWith("低") || s === "LOW") return "low";
+  if (s.startsWith("中") || s === "MODERATE") return "mid";
+  if (s.startsWith("高") || s.startsWith("HIGH")) return "high";
+  return "";
+};
+const giBadge = (gi) => { const lv = gi <= 55 ? "低GI" : gi <= 69 ? "中GI" : "高GI"; return `<span class="pbadge ${badgeCls(lv)}">${lv} ${esc(gi)}</span>`; };
+const purBadge = (mg) => { const lv = mg < 50 ? "低嘌呤" : mg <= 150 ? "中嘌呤" : "高嘌呤"; return `<span class="pbadge ${badgeCls(lv)}">${lv} ${esc(mg)}mg</span>`; };
+const riskBadge = (v) => ({ HIGH_SPIKE: "高", MODERATE: "中", LOW: "低", HIGH: "高" }[v] || v);
+
+function mealTimeOf() {
+  if ($("mealTime").value === "custom") return $("mealCustom").value || "12:00";
+  return $("mealTime").value;
+}
+function fogWindowOf(mealTime) {
+  const [h, m] = mealTime.split(":").map(Number);
+  const t0 = h * 60 + m + 90, t1 = h * 60 + m + 150;
+  const f = (t) => fmtClock((t % 1440) * 60);
+  return f(t0) + "-" + f(t1);
+}
+function renderMeal(obj) {
+  const box = $("mealResult");
+  if (!obj) return;
+  if (obj.error) { box.innerHTML = `<div class="err">⚠ ${esc(obj.error)}</div>`; return; }
+  const dishes = obj.dishes || [];
+  const ind = obj.metabolic_indicators || {};
+  const mealT = mealTimeOf();
+  const fog = obj.fog_window || fogWindowOf(mealT);
+  const demoTag = !apiConfig().key ? `<span class="pbadge mid">离线演示库</span>` : "";
+  const dishHTML = dishes.map((d) => `
+    <div class="foodcard">
+      <div class="name">🍽 ${esc(d.name)} ${demoTag}</div>
+      <div class="badges">${giBadge(d.gi)}${purBadge(d.purine_mg)}<span class="pbadge">≈${esc(d.weight_est_g)}g · 碳水${esc(d.refined_carb_g)}g · 蛋白${esc(d.protein_g)}g · 脂肪${esc(d.fat_g)}g</span></div>
+      ${d.benefit ? `<div class="benefit">🌿 对身体的好处：${esc(d.benefit)}</div>` : ""}
+    </div>`).join("");
+  const spike = ind.glycemic_risk === "HIGH_SPIKE";
+  box.innerHTML = dishHTML + `
+    <div class="indbox">
+      <b>🧪 代谢指标</b>：总热量 <b>${esc(ind.total_calories_kcal ?? "--")} kcal</b> ·
+      血糖负荷 <b>GL ${esc(ind.glycemic_load_gl ?? "--")}</b> <span class="pbadge ${badgeCls(ind.glycemic_risk)}">${riskBadge(ind.glycemic_risk)}波动</span> ·
+      嘌呤总量 <b>${esc(ind.purine_mg ?? "--")}mg</b> <span class="pbadge ${badgeCls(ind.purine_risk)}">${riskBadge(ind.purine_risk)}风险</span>
+    </div>
+    ${spike
+      ? `<div class="fogbox">🌫 <b>餐后脑雾预警（进餐 ${esc(mealT)}）</b>：预估将在 <b>${esc(fog)}</b> 迎来胰岛素分泌过量引发的低血糖谷值，诱发重度脑雾与嗜睡。建议：主食减半；餐后 15 分钟在校园慢走 600 步以压平血糖峰值。</div>`
+      : `<div class="switchbox">✅ 血糖负荷温和，无高概率脑雾窗口；保持当前饮食结构即可。</div>`}
+    ${obj.canteen_switch ? `<div class="switchbox">🏫 <b>食堂窗口改选指令</b>：${esc(obj.canteen_switch)}</div>` : ""}
+    ${obj.micro_intervention ? `<div class="switchbox">💡 <b>微干预</b>：${esc(obj.micro_intervention)}${esc(obj.reason ? "（依据：" + obj.reason + "）" : "")}</div>` : ""}
+    <div style="margin-top:8px"><button class="ghost" id="toAdvisor">🧠 把这餐交给三智能体安排今晚计划 →</button></div>`;
+  const btn = $("toAdvisor");
+  if (btn) btn.addEventListener("click", () => {
+    $("scenario").value = `今晚吃了${dishes.map((o) => o.name).join("、")}，想安排今晚和明天的饮食与运动计划`;
+    switchTab("advisor");
+  });
+}
+
+let mealPhotoData = null;
+function resizeImage(file, maxDim = 1024) {
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const s = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(img.width * s));
+      c.height = Math.max(1, Math.round(img.height * s));
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      res(c.toDataURL("image/jpeg", 0.72));
+    };
+    img.onerror = rej;
+    img.src = URL.createObjectURL(file);
+  });
+}
+$("mealPhoto").addEventListener("change", async (e) => {
+  const f = e.target.files && e.target.files[0];
+  if (!f) return;
+  try {
+    mealPhotoData = await resizeImage(f);
+    $("mealPreview").src = mealPhotoData;
+    $("mealPreview").classList.remove("hidden");
+    $("mealClearPhoto").classList.remove("hidden");
+  } catch (err) { $("mealResult").innerHTML = `<div class="err">图片读取失败：${esc(err.message || err)}</div>`; }
+});
+$("mealClearPhoto").addEventListener("click", () => {
+  mealPhotoData = null;
+  $("mealPhoto").value = "";
+  $("mealPreview").classList.add("hidden");
+  $("mealClearPhoto").classList.add("hidden");
+});
+$("mealTime").addEventListener("change", () => $("mealCustom").classList.toggle("hidden", $("mealTime").value !== "custom"));
+
+async function analyzeMeal() {
+  const input = $("mealInput").value.trim();
+  if (!input && !mealPhotoData) return;
+  const btn = $("mealSend");
+  btn.disabled = true;
+  $("mealResult").innerHTML = `<div class="mode-hint">分析中…</div>`;
+  try {
+    const { provider, model, key } = apiConfig();
+    if (key && provider === "dashscope" && model.startsWith("qwen-vl") && mealPhotoData) {
+      const content = [{ type: "text", text: `这是高校食堂/外卖的一餐。请按协议输出 JSON 解构。进餐时间 ${mealTimeOf()}。${input ? "补充描述：" + input : ""}` },
+        { type: "image_url", image_url: { url: mealPhotoData } }];
+      const out = await callLLM([{ role: "system", content: MEAL_SYSTEM_PROMPT }, { role: "user", content }]);
+      renderMeal(parseJSONText(out));
+    } else if (key && input) {
+      const out = await callLLM([{ role: "system", content: MEAL_SYSTEM_PROMPT }, { role: "user", content: `${input}（进餐时间 ${mealTimeOf()}）` }]);
+      renderMeal(parseJSONText(out));
+    } else if (key && mealPhotoData) {
+      $("mealResult").innerHTML = `<div class="err">当前模型 ${esc(PROVIDERS[provider].name)} / ${esc(model)} 不支持图片输入。请切换到阿里云百炼 <code>qwen-vl-plus</code>，或补充文字描述。</div>`;
+    } else {
+      await sleep(400);
+      if (!input && mealPhotoData) { $("mealResult").innerHTML = `<div class="err">演示模式无法识别照片内容，请补充文字描述（如「麻辣烫」「黄焖鸡」），或配置 qwen-vl 视觉模型。</div>`; return; }
+      const hit = DEMO_MEALS.find((d) => d.match.test(input));
+      if (!hit) { $("mealResult").innerHTML = `<div class="err">演示模式未收录「${esc(input)}」，请在「API 设置」页配置免费 Key 体验真实模型。</div>`; return; }
+      renderMeal(hit.data);
+    }
+  } catch (e) {
+    $("mealResult").innerHTML = `<div class="err">调用失败：${esc(e.message || e)}</div>`;
+  } finally { btn.disabled = false; }
+}
+$("mealSend").addEventListener("click", analyzeMeal);
+$("mealInput").addEventListener("keydown", (e) => { if (e.key === "Enter") analyzeMeal(); });
+$("mealChips").querySelectorAll(".chip").forEach((c) =>
+  c.addEventListener("click", () => { $("mealInput").value = c.textContent; analyzeMeal(); })
+);
+$("mealPrompt").textContent = MEAL_SYSTEM_PROMPT;
+$("copyMealPrompt").addEventListener("click", () => navigator.clipboard.writeText(MEAL_SYSTEM_PROMPT).then(() => ($("copyMealPrompt").textContent = "✅ 已复制")));
+
+/* ============================================================
+   ③ 护眼感知（MediaPipe Face Mesh · EAR 眨眼疲劳）
+   ============================================================ */
+const { FaceLandmarker } = mp || {};
+const eyeVideo = $("eyeVideo"), eyeCanvas = $("eyeCanvas");
+const ectx = eyeCanvas.getContext("2d");
+const eyeDU = mp ? new DrawingUtils(ectx) : null;
+const eyeBadge = $("eyeBadge"), halo = $("halo");
+const EYE_CONFIG = { closed: 0.20, open: 0.27, squint: 0.25, squintSec: 1.5, lowRate: 6, lowWindowSec: 300, blinkWindowSec: 60 };
+const EYE_IDX = { L: [33, 160, 158, 133, 153, 144], R: [362, 385, 387, 263, 373, 380] };
+const eyeState = {
+  running: false, frame: 0, lastT: 0,
+  ema: { ear: 0.3 },
+  closed: false, blinks: [], blinkCount: 0,
+  squintSince: null, lowSince: null,
+  t20: { on: false, remain: 1200, phase: "work" },
+  haloOn: false,
+};
+let faceLandmarker = null, eyeStream = null, eyeRaf = 0, lastEyeVideoTime = -1;
+
+$("eyeStats").innerHTML = [
+  ["teal", "--", "平均 EAR（眼部纵横比）"],
+  ["", "0", "眨眼总次数"],
+  ["", "--", "眨眼频率（次/分）"],
+  ["teal", "监测中", "眼疲劳状态"],
+  ["", "0s", "低瞬目持续"],
+].map((d, i) => `<div class="card"><b class="${d[0]}" id="ev${i}">${d[1]}</b><span>${d[2]}</span></div>`).join("");
+const ev = (i, v) => { const el = $("ev" + i); if (el) el.textContent = v; };
+
+async function loadFaceModel() {
+  eyeBadge.textContent = "人脸模型加载中…";
+  const fileset = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+  const options = {
+    baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task" },
+    runningMode: "VIDEO", numFaces: 1,
+    minFaceDetectionConfidence: 0.5, minFacePresenceConfidence: 0.5, minTrackingConfidence: 0.5,
+    outputFaceBlendshapes: false, outputFacialTransformationMatrixes: false,
+  };
+  try { faceLandmarker = await FaceLandmarker.createFromOptions(fileset, { ...options, baseOptions: { ...options.baseOptions, delegate: "GPU" } }); }
+  catch (e) {
+    console.warn("GPU 不可用，回退 CPU", e);
+    faceLandmarker = await FaceLandmarker.createFromOptions(fileset, { ...options, baseOptions: { ...options.baseOptions, delegate: "CPU" } });
+  }
+}
+function earOf(lm, idx) {
+  const [p1, p2, p3, p4, p5, p6] = idx.map((i) => lm[i]);
+  const n = (dist2(lm[idx[1]], lm[idx[5]]) + dist2(lm[idx[2]], lm[idx[4]])) / (2 * dist2(lm[idx[0]], lm[idx[3]]));
+  return isFinite(n) ? n : 0.3;
+}
+function eyeLoop() {
+  if (!eyeState.running) return;
+  eyeRaf = requestAnimationFrame(eyeLoop);
+  if (!faceLandmarker || eyeVideo.readyState < 2) return;
+  if (eyeVideo.currentTime === lastEyeVideoTime) return;
+  lastEyeVideoTime = eyeVideo.currentTime;
+  const now = performance.now();
+  const dt = clamp((now - eyeState.lastT) / 1000, 0.02, 0.3);
+  eyeState.lastT = now;
+  eyeState.frame++;
+
+  const results = faceLandmarker.detectForVideo(eyeVideo, now);
+  const lm = results.faceLandmarks && results.faceLandmarks[0];
+
+  ectx.save();
+  ectx.clearRect(0, 0, eyeCanvas.width, eyeCanvas.height);
+  ectx.translate(eyeCanvas.width, 0);
+  ectx.scale(-1, 1);
+  if (lm) {
+    const tessel = FaceLandmarker.FACE_LANDMARKS_TESSELATION;
+    eyeDU.drawConnectors(lm, tessel, { color: "rgba(45,212,191,.35)", lineWidth: 0.6 });
+    const eyePts = [...EYE_IDX.L, ...EYE_IDX.R].map((i) => lm[i]);
+    eyeDU.drawLandmarks(eyePts, { color: "#fbbf24", lineWidth: 1, radius: 2.5 });
+    analyzeEye(lm, dt, now);
+  } else {
+    eyeBadge.textContent = "未检测到人脸，请正对镜头";
+    eyeBadge.classList.remove("ok", "warn");
+  }
+  ectx.restore();
+  tickT20(dt);
+}
+
+function analyzeEye(lm, dt, now) {
+  const accel = $("eyeDemo").checked ? 20 : 1;
+  const ear = (earOf(lm, EYE_IDX.L) + earOf(lm, EYE_IDX.R)) / 2;
+  const k = 0.35;
+  eyeState.ema.ear = eyeState.ema.ear * (1 - k) + ear * k;
+  const e = eyeState.ema.ear;
+
+  /* 眨眼状态机 */
+  if (!eyeState.closed && e < EYE_CONFIG.closed) { eyeState.closed = true; }
+  else if (eyeState.closed && e > EYE_CONFIG.open) {
+    eyeState.closed = false;
+    eyeState.blinkCount++;
+    eyeState.blinks.push(now);
+  }
+  /* 挤眼/眯眼 */
+  if (!eyeState.closed && e < EYE_CONFIG.squint) {
+    eyeState.squintSince = eyeState.squintSince === null ? now : eyeState.squintSince;
+  } else eyeState.squintSince = null;
+  const squinting = eyeState.squintSince !== null && now - eyeState.squintSince > EYE_CONFIG.squintSec * 1000;
+
+  /* 眨眼频率与低瞬目持续 */
+  const win = (EYE_CONFIG.blinkWindowSec * 1000) / accel;
+  eyeState.blinks = eyeState.blinks.filter((t) => now - t <= win);
+  const rate = eyeState.blinks.length / (win / 60000);
+  const low = rate < EYE_CONFIG.lowRate;
+  if (low) {
+    if (eyeState.lowSince === null) eyeState.lowSince = now;
+  } else eyeState.lowSince = null;
+  const lowSec = eyeState.lowSince === null ? 0 : (now - eyeState.lowSince) / 1000;
+  const severe = lowSec >= EYE_CONFIG.lowWindowSec / accel;
+
+  if (severe) { setHalo(true); eyeBadge.classList.add("warn"); eyeBadge.classList.remove("ok"); eyeBadge.textContent = "⚠ 重度眼疲劳与干眼高发期 · 请执行 20-20-20"; }
+  else if (squinting) { eyeBadge.classList.add("warn"); eyeBadge.classList.remove("ok"); eyeBadge.textContent = "检测到眯眼/挤眼，请放松眼周肌肉"; }
+  else { eyeBadge.classList.add("ok"); eyeBadge.classList.remove("warn"); eyeBadge.textContent = eyeState.closed ? "眨眼检测中" : "眼部监测正常"; }
+
+  if (eyeState.frame % 5 === 0) {
+    ev(0, e.toFixed(3));
+    ev(1, eyeState.blinkCount);
+    ev(2, rate.toFixed(1));
+    ev(3, severe ? "重度疲劳⚠" : squinting ? "挤眼眯眼⚠" : "正常");
+    ev(4, Math.round(lowSec) + "s");
+  }
+}
+
+function setHalo(on) { eyeState.haloOn = on; halo.classList.toggle("on", on); $("haloBtn").textContent = on ? "🌅 呼吸晕光：开" : "🌅 呼吸晕光：关"; }
+$("haloBtn").addEventListener("click", () => setHalo(!eyeState.haloOn));
+
+function tickT20(dt) {
+  if (!eyeState.t20.on) return;
+  eyeState.t20.remain -= dt;
+  if (eyeState.t20.remain <= 0) {
+    const accel = $("eyeDemo").checked ? 20 : 1;
+    if (eyeState.t20.phase === "work") {
+      eyeState.t20.phase = "rest";
+      eyeState.t20.remain = Math.max(5, 20 / accel);
+      setHalo(true);
+      eyeBadge.textContent = "🌿 眺望 6 米远处 20 秒，放松睫状肌";
+    } else {
+      eyeState.t20.phase = "work";
+      eyeState.t20.remain = 1200 / accel;
+      setHalo(false);
+    }
+  }
+  $("t20Display").textContent = (eyeState.t20.phase === "work" ? "⏱ " : "🌿 ") + fmtHMS(eyeState.t20.remain);
+}
+$("t20Btn").addEventListener("click", () => {
+  const accel = $("eyeDemo").checked ? 20 : 1;
+  eyeState.t20.on = !eyeState.t20.on;
+  if (eyeState.t20.on) {
+    eyeState.t20.phase = "work";
+    eyeState.t20.remain = 1200 / accel;
+    $("t20Btn").textContent = "⏸ 停止 20-20-20";
+  } else { $("t20Btn").textContent = "⏱ 开始 20-20-20"; $("t20Display").textContent = "20:00"; }
+});
+
+async function startEye() {
+  if (!mp || !FaceLandmarker) { eyeBadge.textContent = "MediaPipe CDN 加载失败，请联网后刷新"; return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { eyeBadge.textContent = "当前环境不支持摄像头（需 HTTPS / localhost）"; return; }
+  $("eyeStart").disabled = true;
+  eyeBadge.textContent = "启动中…";
+  try {
+    if (!faceLandmarker) await loadFaceModel();
+    eyeStream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" }, audio: false });
+    eyeVideo.srcObject = eyeStream;
+    await new Promise((res) => (eyeVideo.onloadedmetadata = res));
+    eyeCanvas.width = eyeVideo.videoWidth;
+    eyeCanvas.height = eyeVideo.videoHeight;
+    await eyeVideo.play();
+    eyeState.running = true;
+    eyeState.lastT = performance.now();
+    $("eyeStop").disabled = false;
+    eyeBadge.textContent = "已启动 · 请正对镜头";
+    eyeLoop();
+  } catch (e) {
+    console.error(e);
+    eyeBadge.textContent = "启动失败：" + (e && e.name === "NotAllowedError" ? "摄像头权限被拒绝" : (e && e.message) || e);
+    $("eyeStart").disabled = false;
+  }
+}
+function stopEye() {
+  if (!eyeState.running && !eyeStream) return;
+  eyeState.running = false;
+  cancelAnimationFrame(eyeRaf);
+  if (eyeStream) { eyeStream.getTracks().forEach((t) => t.stop()); eyeStream = null; }
+  eyeVideo.srcObject = null;
+  ectx.clearRect(0, 0, eyeCanvas.width, eyeCanvas.height);
+  eyeBadge.classList.remove("ok", "warn");
+  eyeBadge.textContent = "已停止";
+  $("eyeStart").disabled = false;
+  $("eyeStop").disabled = true;
+}
+$("eyeStart").addEventListener("click", startEye);
+$("eyeStop").addEventListener("click", stopEye);
+
+/* ============================================================
+   ④ 咖啡因半衰期沙盘（一室代谢模型）
+   ============================================================ */
+const THRESHOLD = 50;
+let caffTick = null, caffState = null;
+function caffClockSec(t) { const [h, m] = t.split(":").map(Number); return h * 3600 + m * 60; }
+function caffNextSleep(clockSec) {
+  const nowD = new Date();
+  const nowSec = nowD.getHours() * 3600 + nowD.getMinutes() * 60 + nowD.getSeconds();
+  let delta = clockSec - nowSec;
+  if (delta <= 0) delta += 86400;
+  return nowD.getTime() / 1000 + delta;
+}
+function drawCaffChart(sleepH, intakeH, dose, k) {
+  const c = $("caffChart");
+  const W = c.width, H = c.height;
+  const x = c.getContext("2d");
+  x.clearRect(0, 0, W, H);
+  const padL = 52, padR = 14, padT = 16, padB = 30;
+  const tMax = Math.max(14, sleepH + 1.5);
+  const yMax = Math.max(dose, 120) * 1.15;
+  const X = (t) => padL + (t / tMax) * (W - padL - padR);
+  const Y = (v) => padT + (1 - v / yMax) * (H - padT - padB);
+
+  x.strokeStyle = "rgba(255,255,255,.08)"; x.fillStyle = "#8ba3a0"; x.font = "11px sans-serif";
+  for (let v = 0; v <= yMax; v += 50) { x.beginPath(); x.moveTo(padL, Y(v)); x.lineTo(W - padR, Y(v)); x.stroke(); x.fillText(v + "mg", 6, Y(v) + 4); }
+  for (let t = 0; t <= tMax; t += 2) { x.beginPath(); x.moveTo(X(t), padT); x.lineTo(X(t), H - padB); x.stroke(); x.fillText(t + "h", X(t) - 6, H - 12); }
+
+  /* 阈值线 */
+  x.strokeStyle = "#fbbf24"; x.setLineDash([6, 5]); x.lineWidth = 1.5;
+  x.beginPath(); x.moveTo(padL, Y(THRESHOLD)); x.lineTo(W - padR, Y(THRESHOLD)); x.stroke();
+  x.setLineDash([]); x.fillStyle = "#fbbf24"; x.fillText("睡眠保护阈值 50mg", W - padR - 130, Y(THRESHOLD) - 8);
+  /* 入睡线 */
+  x.strokeStyle = "#f43f5e";
+  x.beginPath(); x.moveTo(X(sleepH), padT); x.lineTo(X(sleepH), H - padB); x.stroke();
+  x.fillStyle = "#f43f5e"; x.fillText("计划入睡", X(sleepH) + 4, padT + 12);
+
+  /* 浓度曲线（从当前时刻起） */
+  x.strokeStyle = "#2dd4bf"; x.lineWidth = 2.5; x.setLineDash([]);
+  x.beginPath();
+  for (let t = 0; t <= tMax; t += 0.1) {
+    const v = dose * Math.exp(-k * (t + intakeH));
+    if (t === 0) x.moveTo(X(t), Y(v)); else x.lineTo(X(t), Y(v));
+  }
+  x.stroke();
+  x.fillStyle = "#2dd4bf"; x.fillText("体内咖啡因浓度", padL + 8, padT + 14);
+
+  /* 截断时间：最晚摄入时刻 t_c 满足 剂量·e^(−k(sleep−t_c))=阈值 → t_c = sleep − ln(剂量/阈值)/k */
+  if (caffState && caffState.showCurfew) {
+    x.strokeStyle = "#34d399"; x.setLineDash([6, 5]);
+    x.beginPath(); x.moveTo(X(caffState.curfewH), padT); x.lineTo(X(caffState.curfewH), H - padB); x.stroke();
+    x.setLineDash([]); x.fillStyle = "#34d399";
+    x.fillText("咖啡因截断点：距今 " + fmtHMS(caffState.curfewH * 3600), X(caffState.curfewH) - 130, H - 4);
+  }
+}
+function runCaffeine() {
+  const dose = Number($("drinkSel").value) * Number($("cups").value);
+  const halfLife = Number($("halfLife").value);
+  const k = Math.LN2 / halfLife; /* 每小时 */
+  const sleepClock = caffClockSec($("sleepTime").value);
+  const sleepAbs = caffNextSleep(sleepClock);
+  const nowAbs = Date.now() / 1000;
+  const intakeAbs = nowAbs - Number($("minsAgo").value) * 60;
+  const sleepH = (sleepAbs - nowAbs) / 3600;
+  const intakeH = (nowAbs - intakeAbs) / 3600;
+  const remainAtSleep = dose * Math.exp(-k * (sleepH + intakeH));
+  /* 截断点：最晚摄入时刻，使入睡时浓度恰为阈值；距今小时数（可为负=已过） */
+  const curfewH = sleepH - Math.log(dose / THRESHOLD) / k;
+  const deadlineAbs = sleepAbs - (Math.log(dose / THRESHOLD) / k) * 3600;
+  const showCurfew = curfewH > 0 && curfewH < sleepH;
+  let verdict;
+  if (remainAtSleep > THRESHOLD) {
+    verdict = `<div class="err">⚠ 已错过截断窗口：按当前剂量，应在 <b>${fmtClock(deadlineAbs % 86400)}</b> 前停止咖啡因摄入；入睡时（${esc($("sleepTime").value)}）体内仍余 <b>${Math.round(remainAtSleep)}mg</b>（&gt;50mg 阈值），将拮抗腺苷受体、压制深度睡眠。今晚以补觉为主，明晚提前截断。</div>`;
+  } else {
+    const extra = showCurfew
+      ? `今晚咖啡因截断点 <b>${fmtClock(deadlineAbs % 86400)}</b>（距今 ${fmtHMS(curfewH * 3600)}），在此之前停止摄入即可保护深度睡眠。`
+      : "当前剂量在今晚入睡前可完全代谢至安全水平。";
+    verdict = `<div class="ok-text">✅ 代谢窗口安全：入睡时体内余量约 ${Math.round(remainAtSleep)}mg，低于 50mg 睡眠保护阈值。${extra}</div>`;
+  }
+  $("caffVerdict").innerHTML = verdict;
+  caffState = { dose, k, intakeAbs, sleepAbs, sleepH, intakeH, curfewH, deadlineAbs, showCurfew };
+  drawCaffChart(sleepH, intakeH, dose, k);
+  if (caffTick) clearInterval(caffTick);
+  const updateCountdown = () => {
+    if (!caffState) return;
+    const elapsedH = (Date.now() / 1000 - caffState.intakeAbs) / 3600;
+    const nowLevel = caffState.dose * Math.exp(-caffState.k * elapsedH);
+    let html = `当前体内约 <b>${Math.max(0, Math.round(nowLevel))}mg</b>`;
+    if (caffState.showCurfew) {
+      const remainSec = caffState.deadlineAbs - Date.now() / 1000;
+      html += ` · 距截断点 <b>${fmtHMS(remainSec)}</b>`;
+    }
+    $("caffCountdown").innerHTML = html;
+  };
+  updateCountdown();
+  caffTick = setInterval(updateCountdown, 1000);
+}
+$("caffGo").addEventListener("click", runCaffeine);
+$("caffChart").addEventListener("resize", () => caffState && drawCaffChart(caffState.sleepH, caffState.intakeH, caffState.dose, caffState.k));
+
+/* ============================================================
+   ⑤ 三智能体反思仲裁（Nutri / Physio / Safety-Critic）
+   ============================================================ */
+function profileSummary() {
+  const g = $("gender").value, wa = Number($("waist").value), hi = Number($("hip").value);
+  const whr = hi > 0 ? (wa / hi).toFixed(2) : "--";
+  const flags = [];
+  if ($("chkUric").checked) flags.push("血尿酸偏高");
+  if ($("chkLiver").checked) flags.push("轻度脂肪肝");
+  if ($("chkFlat").checked) flags.push("扁平足");
+  if ($("chkKnee").checked) flags.push("膝关节劳损");
+  return { g, whr, flags, sleepAvg: $("sleepAvg").value, summary: `性别${g}，腰臀比${whr}${flags.length ? "，" + flags.join("、") : ""}，平均熬夜${$("sleepAvg").value}` };
+}
+function profileRules() {
+  const p = profileSummary();
+  const rules = [];
+  const central = (p.g === "male" && p.whr >= 0.9) || (p.g === "female" && p.whr >= 0.85) || $("chkLiver").checked;
+  if (central) rules.push("中心性肥胖/脂肪肝倾向：严格禁止高果糖摄入（拦截含糖茶饮、高糖夜宵）");
+  if ($("chkUric").checked) rules.push("高尿酸：拦截高果糖浆与啤酒酵母；拦截大重量负重深蹲（剧烈无氧产生乳酸，竞争性抑制肾小管尿酸排泄通道）");
+  if ($("chkUric").checked && $("chkKnee").checked) rules.push("高尿酸+关节代偿并发型：拦截深蹲跳/波比跳/跳绳等高冲击跳跃（乳酸+半月板磨损双风险），替换为低冲击关节强化动作");
+  if ($("chkFlat").checked) rules.push("扁平足：跑步需缓震鞋，优先快走/游泳");
+  return { central, rules, profile: p };
+}
+$("typeBtn").addEventListener("click", () => {
+  const { rules, profile } = profileRules();
+  $("profileTypes").innerHTML =
+    `<div style="margin-top:8px"><span class="typebadge">📊 腰臀比 <b>${esc(profile.whr)}</b></span>` +
+    rules.map((r) => `<span class="typebadge">🚫 <b>拦截规则</b>：${esc(r)}</span>`).join("") + `</div>`;
+});
+
+const PROMPT_NUTRI = `你是「脊智健 SpineSync」混合多智能体系统中的【Nutri-Agent 临床营养代谢体】。你只负责营养代谢维度，不负责运动安全判断。
+输入：用户的生活描述 + 体征画像（身高体重腰臀比、体检指标、熬夜时长）。
+输出：严格 JSON，格式如下：
+{"meal_metabolism":{"gi_level":"高GI|中GI|低GI","purine_level":"高嘌呤|中嘌呤|低嘌呤","glycemic_risk":"HIGH_SPIKE|MODERATE|LOW"},"brain_fog_risk":"餐后脑雾窗口的一句话预判","nutri_plan":["今晚/明日的营养策略"],"caffeine_advice":"咖啡因与代偿营养建议","micronutrient_note":"针对熬夜的微量营养素策略"}
+规则：
+1. 遵循《中国食物成分表》常识与 GI/嘌呤分级（≤55低GI；<50mg低嘌呤；内脏/浓汤/啤酒高嘌呤）。
+2. 熬夜场景优先：复合维生素B（乙酰胆碱合成）、镁（交感神经舒缓）、钠钾平衡补水；凌晨0点后严禁高糖夜宵。
+3. 用户有痛风/糖尿病史时，建议末尾注明"请遵医嘱"。
+4. 只输出 JSON，不加任何解释。`;
+
+const PROMPT_PHYSIO = `你是「脊智健 SpineSync」混合多智能体系统中的【Physio-Agent 运动生物力学体】。你只负责运动安全与生物力学维度，不负责营养建议。
+输入：用户症状与运动意图 + 体征画像。
+输出：严格 JSON，格式如下：
+{"symptom_assessment":{"level":"low|medium|high","note":"一句话"},"proposed_exercises":[{"name":"拟议运动","sets":"组数或时长"}],"biomechanics_note":"生物力学依据一句话","forbidden_exercises":["你自己判断应拦截的运动"],"alternatives":[{"name":"替代运动","sets":"组数或时长"}],"red_flags":["需就医的信号"]}
+安全铁律（优先级最高）：
+1. 血尿酸偏高：禁止大重量深蹲、深蹲跳、波比跳（无氧乳酸抑制尿酸排泄）；膝关节劳损：禁止跳跃类与高冲击运动（半月板/髌股关节磨损）。
+2. 宿舍场景：优先零噪音、小空间、可利用床梯/椅背/书桌/门框的具身康复动作（踝伸展、垫书坐姿校准、门框开胸拉伸、靠墙静蹲、坐姿抗阻伸膝）。
+3. 静息痛、肿胀、交锁、夜间痛出现时，red_flags 提示就医。
+4. 只输出 JSON，不加任何解释。`;
+
+const PROMPT_SAFETY = `你是「脊智健 SpineSync」混合多智能体系统中的【Safety-Critic 安全仲裁中枢·核心壁垒】。输入：用户意图 + 体征画像规则 + Nutri-Agent JSON + Physio-Agent JSON。
+仲裁规则（按优先级）：
+1. 医疗禁忌校验优先于一切：若 Physio-Agent 提议的运动触犯体征规则（如高尿酸+膝劳损却提议深蹲跳/波比跳），必须强制拦截，并替换为低冲击方案（如：15分钟校园迎光快步慢行 + 低冲击坐姿抗阻拉伸 + 阶段性水合补给）。
+2. 融合 Nutri 与 Physio 结论为"今晚方案"与"明日方案"。
+3. 命中 red_flags 时 safety_note 必须提醒就医。
+只输出严格 JSON：
+{"intercepts":[{"proposed":"被拦截动作","reason":"医疗禁忌依据","replacement":"替代方案"}],"final_plan":{"tonight":["今晚要做的事"],"tomorrow":["明天要做的事"]},"safety_note":"一句话安全提醒"}`;
+
+const PSEUDO = `// LangGraph 决策状态机伪代码（Safety-Critic 为核心壁垒）
+const graph = new StateGraph({ channels: { profile, meal, intent, nutri, physio, final } });
+
+graph.addNode("Nutri-Agent",   (s) => callLLM(PROMPT_NUTRI,  s.meal + s.profile));   // 临床营养代谢体
+graph.addNode("Physio-Agent",  (s) => callLLM(PROMPT_PHYSIO, s.intent + s.profile));  // 运动生物力学体
+graph.addNode("Safety-Critic", (s) => {
+  // ① 确定性规则引擎（医疗禁忌校验，不可被大模型绕过）
+  const forbidden = RULES.filter(r => r.match(s.profile));          // 高尿酸+膝劳损 → 禁深蹲跳/波比跳
+  for (const ex of s.physio.proposed_exercises) {
+    if (forbidden.some(f => f.hits(ex.name))) {                     // 深蹲跳命中禁忌
+      s.final.intercepts.push({ proposed: ex.name,
+        reason: "剧烈无氧乳酸抑制尿酸排泄 + 跳跃加重半月板磨损",
+        replacement: "15分钟校园迎光快步慢行 + 低冲击坐姿抗阻拉伸 + 阶段性水合补给" });
+      ex.blocked = true;                                            // 🚫 强制拦截
+    }
+  }
+  // ② LLM 反思融合：安全 > 减肥效率 > 口感偏好
+  return callLLM(PROMPT_SAFETY, { s, intercepts: s.final.intercepts });
+});
+
+graph.addEdge(START, "Nutri-Agent");  graph.addEdge(START, "Physio-Agent"); // 双专家并行推演
+graph.addEdge("Nutri-Agent", "Safety-Critic"); graph.addEdge("Physio-Agent", "Safety-Critic");
+graph.addEdge("Safety-Critic", END); // 交叉仲裁后输出闭环微干预处方`;
+
+const DEMO_SCRIPT = [
+  { stage: "N", think: [
+    "收到输入：「麻辣烫+冰红茶，尿酸偏高+膝劳损，想深蹲跳和波比跳刷脂，明天全天复习」",
+    "营养维度：麻辣烫 → 高GI/高嘌呤/牛油底；冰红茶 → 游离糖叠加，餐后血糖陡升",
+    "脑雾预判：预估餐后 90~150 分钟出现反应性低血糖谷值，全天复习效率将受冲击",
+    "营养策略：晚餐减碳增纤；复习夜禁高糖夜宵，推送维生素B族+镁+淡盐水代偿组合",
+  ],
+  json: { meal_metabolism: { gi_level: "高GI", purine_level: "高嘌呤", glycemic_risk: "HIGH_SPIKE" }, brain_fog_risk: "餐后13:30-14:30迎低血糖谷值，诱发脑雾嗜睡", nutri_plan: ["晚餐主食减半、绿叶菜打底", "22:00 后禁高糖夜宵"], caffeine_advice: "冰红茶换无糖茶，17:30 后停咖啡因", micronutrient_note: "复合维生素B（乙酰胆碱）+200mg镁+300ml常温淡盐水" } },
+  { stage: "P", think: [
+    "运动维度：目标=刷脂；体征=血尿酸偏高 + 膝关节劳损",
+    "生物力学推演：深蹲跳落地冲击≈体重3~5倍，髌股关节与半月板负荷骤增；无氧爆发产生大量乳酸",
+    "代谢耦合：乳酸竞争性抑制肾小管尿酸排泄通道 → 尿酸排出受阻 → 痛风发作风险上升",
+    "结论：深蹲跳/波比跳对当前体征高危，需替换为低冲击关节强化方案",
+  ],
+  json: { symptom_assessment: { level: "high", note: "高尿酸+膝劳损并发，禁高冲击跳跃" }, proposed_exercises: [{ name: "深蹲跳", sets: "4组×15次" }, { name: "波比跳", sets: "5组×10次" }], biomechanics_note: "跳跃落地冲击≈体重3~5倍，叠加无氧乳酸抑制尿酸排泄", forbidden_exercises: ["深蹲跳", "波比跳"], alternatives: [{ name: "校园迎光快步慢行", sets: "15分钟" }, { name: "坐姿抗阻伸膝", sets: "3组×12次" }, { name: "靠墙静蹲", sets: "30秒×3组" }], red_flags: ["关节静息痛", "肿胀", "夜间痛"] } },
+  { stage: "S", think: [
+    "交叉比对：Physio 提议 [深蹲跳、波比跳] ∩ 体征规则（高尿酸+膝劳损）→ 触发医疗禁忌拦截",
+    "拦截依据：剧烈无氧产生的过量乳酸抑制尿酸排泄；跳跃加重膝关节半月板磨损",
+    "方案修正：强制替换为「15分钟校园迎光快步慢行 + 针对性低冲击坐姿抗阻拉伸 + 阶段性水合补给」",
+    "融合输出：今晚 = 低冲击护膝训练 + 水合；明日 = 高纤早餐 + 迎光快走；安全提醒就医信号",
+  ],
+  json: { intercepts: [{ proposed: "深蹲跳/波比跳", reason: "剧烈无氧乳酸抑制尿酸排泄+跳跃加重半月板磨损", replacement: "15分钟校园迎光快步慢行+低冲击坐姿抗阻拉伸+阶段性水合补给" }], final_plan: { tonight: ["15分钟校园迎光快步慢行", "坐姿抗阻伸膝 3组×12次", "靠墙静蹲 30秒×3组", "300ml常温淡盐水+维生素B族+200mg镁"], tomorrow: ["早餐高纤维蔬菜、主食减半", "午餐后迎光快走15分钟"] }, safety_note: "若关节出现静息痛、肿胀或夜间痛，请及时就医；高尿酸期避免啤酒与浓汤" } },
+];
+
+function logLine(sel, text, cls) { $(sel).insertAdjacentHTML("beforeend", `<div class="${cls || ""}">${esc(text)}</div>`); }
+function logJSON(sel, obj) { $(sel).insertAdjacentHTML("beforeend", `<code class="json">${esc(JSON.stringify(obj, null, 2))}</code>`); }
+function resetStages() {
+  ["logN", "logP", "logS"].forEach((id) => ($(id).innerHTML = ""));
+  ["statusN", "statusP", "statusS"].forEach((id) => ($(id).textContent = ""));
+  $("final").style.display = "none";
+}
+function renderFinal(intercepts, plan, safetyNote) {
+  const tonight = (plan.tonight || []).map((x) => `<div>✅ ${esc(x)}</div>`).join("");
+  const tomorrow = (plan.tomorrow || []).map((x) => `<div>📅 ${esc(x)}</div>`).join("");
+  const blocked = (intercepts || []).map((x) => `<div>🚫 医疗禁忌拦截：<b>${esc(x.proposed || x)}</b><br><span style="color:var(--muted)">${esc(x.reason || "")} → 替换为「${esc(x.replacement || "")}」</span></div>`).join("");
+  $("finalBody").innerHTML = `
+    <div class="line">${blocked}</div>
+    <div class="block"><b>今晚方案</b><br>${tonight}</div>
+    <div class="block"><b>明日方案</b><br>${tomorrow}</div>
+    ${safetyNote ? `<div class="line">⚠ ${esc(safetyNote)}</div>` : ""}
+    <div style="margin-top:12px"><button class="ghost" id="toPose">🧍 去「姿态纠偏」练一组护膝/护脊动作 →</button></div>`;
+  $("toPose").addEventListener("click", () => switchTab("pose"));
+  $("final").style.display = "block";
+}
+
+async function runAdvisorDemo() {
+  const stageMap = { N: ["logN", "statusN"], P: ["logP", "statusP"], S: ["logS", "statusS"] };
+  for (const step of DEMO_SCRIPT) {
+    const [log, status] = stageMap[step.stage];
+    $(status).textContent = "思考中…";
+    await sleep(500);
+    for (const line of step.think) { logLine(log, "💭 " + line, "think"); await sleep(500); }
+    logJSON(log, step.json);
+    $(status).textContent = step.stage === "S" ? "仲裁完成" : "已提交结论";
+    await sleep(400);
+  }
+  renderFinal(DEMO_SCRIPT[2].json.intercepts, DEMO_SCRIPT[2].json.final_plan, DEMO_SCRIPT[2].json.safety_note);
+}
+
+async function runAdvisorReal() {
+  const input = $("scenario").value.trim();
+  if (!input) return;
+  const { summary, rules } = profileRules();
+  const profText = summary + "。硬性拦截规则：" + (rules.join("；") || "无");
+
+  $("statusN").textContent = "调用中…";
+  const N = parseJSONText(await callLLM([{ role: "system", content: PROMPT_NUTRI }, { role: "user", content: input + "；体征画像：" + profText }]));
+  logLine("logN", "💭 完成营养代谢分析：");
+  logJSON("logN", N);
+  $("statusN").textContent = "已提交结论";
+
+  $("statusP").textContent = "调用中…";
+  const P = parseJSONText(await callLLM([{ role: "system", content: PROMPT_PHYSIO }, { role: "user", content: input + "；体征画像：" + profText }]));
+  logLine("logP", "💭 完成运动生物力学评估：");
+  logJSON("logP", P);
+  $("statusP").textContent = "已提交结论";
+
+  $("statusS").textContent = "仲裁中…";
+  /* 确定性规则引擎：医疗禁忌拦截不可被大模型绕过 */
+  const jumpHit = (n) => /深蹲跳|波比跳|跳绳|开合跳|跳跃/.test(n);
+  const intercepts = [];
+  const uric = $("chkUric").checked, knee = $("chkKnee").checked;
+  for (const ex of P.proposed_exercises || []) {
+    if (uric && knee && jumpHit(ex.name)) {
+      intercepts.push({ proposed: ex.name, reason: "剧烈无氧产生的过量乳酸会抑制尿酸排泄，跳跃会加重膝关节半月板磨损", replacement: "15分钟校园迎光快步慢行+针对性低冲击坐姿抗阻拉伸+阶段性水合补给" });
+    } else if (knee && jumpHit(ex.name)) {
+      intercepts.push({ proposed: ex.name, reason: "跳跃冲击加重膝关节半月板/髌股关节磨损", replacement: (P.alternatives || []).map((a) => a.name).join("、") });
+    }
+  }
+  logLine("logS", `规则引擎：命中医疗禁忌 ${intercepts.length ? intercepts.map((i) => i.proposed).join("、") + "（强制拦截）" : "0 项"}`);
+  let plan, safetyNote;
+  try {
+    const S = parseJSONText(await callLLM([{ role: "system", content: PROMPT_SAFETY }, { role: "user", content: JSON.stringify({ user: input, profile: profText, agentN: N, agentP: P, forced_intercepts: intercepts }) }]));
+    plan = S.final_plan; safetyNote = S.safety_note;
+    if (!intercepts.length && (S.intercepts || []).length) intercepts.push(...S.intercepts);
+    logJSON("logS", S);
+  } catch (e) {
+    const tonight = [(N.nutri_plan || []).join("、"), ...(P.alternatives || []).map((a) => `${a.name} ${a.sets || ""}`)].filter(Boolean);
+    plan = { tonight, tomorrow: [] };
+    safetyNote = (P.red_flags || []).length ? "若出现" + P.red_flags.join("/") + "，请及时就医" : null;
+    logJSON("logS", { intercepts, final_plan: plan, safety_note: safetyNote, note: "仲裁器规则引擎兜底" });
+  }
+  $("statusS").textContent = "仲裁完成";
+  renderFinal(intercepts, plan, safetyNote);
+}
+
+async function runAdvisor() {
+  const btn = $("runBtn");
+  btn.disabled = true;
+  resetStages();
+  try {
+    if (apiConfig().key) await runAdvisorReal();
+    else await runAdvisorDemo();
+  } catch (e) {
+    $("statusS").textContent = "出错了";
+    $("logS").insertAdjacentHTML("beforeend", `<div class="err">${esc(e.message || e)}</div>`);
+  } finally { btn.disabled = false; }
+}
+$("runBtn").addEventListener("click", runAdvisor);
+document.querySelectorAll("[data-copy]").forEach((b) =>
+  b.addEventListener("click", () => navigator.clipboard.writeText($(b.dataset.copy).textContent).then(() => (b.textContent = "✅ 已复制")))
+);
+$("promptN").textContent = PROMPT_NUTRI;
+$("promptP").textContent = PROMPT_PHYSIO;
+$("promptS").textContent = PROMPT_SAFETY;
+$("pseudo").textContent = PSEUDO;
+
+/* ---------- 初始化 ---------- */
+if (localStorage.getItem("ss_provider")) $("provider").value = localStorage.getItem("ss_provider");
+refreshModels();
+/* 旧版全局 Key 迁移到当前平台槽位 */
+const legacyKey = localStorage.getItem("ss_api_key");
+if (legacyKey && !localStorage.getItem(keySlot(curProvider()))) {
+  localStorage.setItem(keySlot(curProvider()), legacyKey);
+  localStorage.removeItem("ss_api_key");
+}
+/* 预置 Key：仅首次打开自动写入本机浏览器（清除后不再自动恢复）。
+   如需预置自己的 Key：const EMBEDDED_KEYS = { deepseek: "sk-你的key" };
+   注意：请勿把真实 Key 提交到公开仓库 */
+if (!localStorage.getItem("ss_seeded")) {
+  const EMBEDDED_KEYS = {};
+  for (const [prov, k] of Object.entries(EMBEDDED_KEYS)) {
+    if (!localStorage.getItem(keySlot(prov))) localStorage.setItem(keySlot(prov), k);
+  }
+  localStorage.setItem("ss_seeded", "1");
+}
+$("apiKey").value = localStorage.getItem(keySlot(curProvider())) || "";
+refreshModeTag();
+renderPoseMode();
+runCaffeine();
+</script>
+</body>
+</html>

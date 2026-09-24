@@ -1,0 +1,24 @@
+脊智健 SpineSync 桌面版 · 使用说明
+====================================
+
+【方式一】开发/演示运行（需 Node.js 环境）
+  1. 首次使用：在本目录打开命令行执行  npm install  （联网，约2分钟）
+  2. 双击 start.bat 启动；或命令行执行  npm start
+
+【方式二】打包后便携版（无需 Node.js）
+  1. 执行：npm run pack
+  2. 生成目录：dist\SpineSync-win32-x64\
+  3. 双击其中 SpineSync.exe 即可运行，整个文件夹可拷贝到 U 盘带去答辩现场
+
+【功能速览】
+  🧍 姿态纠偏    MediaPipe Pose：膝内扣/骨盆代偿/膝超脚尖 + 床梯踝伸展/门框开胸/垫书坐姿校准
+  🍜 餐食解构    GI/GL/嘌呤/热量 + 餐后脑雾预警 + 食堂窗口改选指令（已预置 DeepSeek Key）
+  👁 护眼感知    Face Mesh EAR 眨眼疲劳 + 琥珀呼吸晕光 + 20-20-20
+  ☕ 咖啡因沙盘  一室代谢曲线 + 截断时间反推 + 神经递质代偿处方
+  🧠 智能仲裁    Nutri / Physio / Safety-Critic 三智能体（DeepSeek-V3）
+
+【说明】
+  - 视频画面全程端侧推理，不回传云端；仅文字/餐盘照片调用云端大模型。
+  - 摄像头权限已由桌面壳自动放行；首次运行如系统弹窗询问请选择允许。
+  - API Key 保存在本机应用数据目录（localStorage），可在「API 设置」页清除更换。
+  - 网页源码 = 上级目录的 jizhijian.html；本目录的 jizhijian.html 是自动同步的副本（每次 npm start / npm run pack 前自动刷新），改网页后重启应用即生效。

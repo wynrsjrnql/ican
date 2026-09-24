@@ -1,0 +1,17 @@
+{
+  "name": "spinesync",
+  "version": "1.0.0",
+  "description": "脊智健 SpineSync · 大学生端云协同健康干预系统（桌面版）",
+  "main": "main.js",
+  "scripts": {
+    "sync": "node build-copy.js",
+    "prestart": "node build-copy.js",
+    "start": "electron .",
+    "prepack": "node build-copy.js",
+    "pack": "electron-packager . SpineSync --platform=win32 --arch=x64 --out=dist --overwrite --asar"
+  },
+  "devDependencies": {
+    "@electron/packager": "^18.3.6",
+    "electron": "^33.2.0"
+  }
+}
